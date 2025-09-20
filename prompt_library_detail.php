@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP Chat - Prompt Library</title>
+    <title>MCP Chat - Prompt Library Detail</title>
     <link rel="icon" type="image/png" href="assets/images/favicon.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -145,7 +145,7 @@
 
         .prompt-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 20px;
         }
 
@@ -251,6 +251,156 @@
             font-size: 16px;
         }
 
+        .prompt-detail-section {
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .prompt-detail-section .category {
+            font-size: 12px;
+            color: #000000;
+            background-color: #FFFFFF;
+            padding: 2px 10px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .prompt-detail-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 10px;
+        }
+
+        .prompt-detail-section .description {
+            font-size: 12px;
+            color: #808080;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 3.6em;
+            line-height: 1.2em;
+        }
+
+        .prompt-detail-section .author {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-top: 0;
+            margin-top: 0;
+        }
+
+        .prompt-detail-section .author-img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            margin-top: 2px;
+        }
+
+        .prompt-detail-section .author-name {
+            font-size: 12px;
+            color: #000000;
+            font-weight: 600;
+            margin: 0;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .prompt-detail-section .author-role {
+            font-size: 12px;
+            color: #808080;
+            margin: 0;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .sidebar-detail {
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            min-height: 200px;
+            /* Adjustable height */
+        }
+
+        .sidebar-detail h6 {
+            font-size: 16px;
+            color: #000000;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .sidebar-detail ol {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-detail ol li {
+            font-size: 14px;
+            color: #808080;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-detail .explore-btn {
+            width: 100%;
+            background-color: #00B7E5;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 25px;
+            padding: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #00B7E5;
+        }
+
+        .sidebar-detail .explore-btn:hover {
+            background-color: #FFFFFF;
+            color: #00B7E5;
+            border: 1px solid #00B7E5;
+        }
+
+        .breadcrumbs {
+            font-size: 14px;
+            color: #000000;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumbs a {
+            color: #000000;
+            text-decoration: none;
+        }
+
+        .breadcrumbs a:hover {
+            color: #00B7E5;
+        }
+
+        .more-prompts-title {
+            font-size: 16px;
+            color: #000000;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .more-prompts-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 50px;
@@ -292,114 +442,14 @@
                 grid-template-columns: 1fr;
             }
 
-            .prompt-library-card {
-                max-width: 100%;
+            .row>.col-8,
+            .row>.col-4 {
+                width: 100%;
             }
-        }
 
-        /* Modal Styles */
-        .modal-content {
-            border-radius: 20px;
-            padding: 20px;
-            background-color: #FFFFFF;
-        }
-
-        .modal-header {
-            border: none;
-            padding: 0 0 10px 0;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            color: #000000;
-        }
-
-        .modal-body .category-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .modal-body .form-check {
-            margin: 0;
-        }
-
-        .modal-body .form-check-label {
-            color: #808080;
-            margin-left: 5px;
-        }
-
-        .modal-body .type-tag {
-            display: inline-block;
-            padding: 5px 15px;
-            margin-right: 10px;
-            margin-bottom: 10px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            border: 1px solid #E4E4E7;
-            color: #000000;
-            background-color: #FFFFFF;
-            transition: all 0.3s ease;
-        }
-
-        .modal-body .type-tag:hover {
-            border-color: #00B7E5;
-            color: #00B7E5;
-        }
-
-        .modal-body .type-tag.selected {
-            background-color: #FFFFFF;
-            color: #00B7E5;
-            border: 1px solid #00B7E5;
-        }
-
-        .modal-body .date-input {
-            border-radius: 8px;
-            border: 1px solid #E4E4E7;
-            padding: 6px;
-            width: 100%;
-            margin-bottom: 15px;
-            font-size: 14px;
-            background-color: white;
-            outline: none;
-        }
-
-        .modal-body .date-input:focus {
-            border-color: transparent;
-            box-shadow: 0 0 5px #00B7E5;
-        }
-
-        .modal-body .btn {
-            border-radius: 25px;
-            padding: 8px 20px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .modal-body .btn-apply {
-            background-color: #00B7E5;
-            color: #FFFFFF;
-            border: 1px solid #00B7E5;
-        }
-
-        .modal-body .btn-apply:hover {
-            background-color: #FFFFFF;
-            color: #00B7E5;
-            border: 1px solid #00B7E5;
-        }
-
-        .modal-body .btn-cancel {
-            background-color: #FFFFFF;
-            color: #00B7E5;
-            border: 1px solid #00B7E5;
-        }
-
-        .modal-body .btn-cancel:hover {
-            background-color: #00B7E5;
-            color: #FFFFFF;
-            border: 1px solid #00B7E5;
+            .more-prompts-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -414,40 +464,51 @@
     </div>
     <div class="main-content">
         <div class="main-header" style="margin: 10px 0 5px 0;">
-            <i class="fas fa-layer-group"></i>
-            <p class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Prompt Library</p>
+            <a href="prompt_library.php" class="back-icon"><i class="fas fa-arrow-left"></i></a>
+            <p class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SEO Content Roadmap</p>
         </div>
         <hr class="main-header-line">
-        <div class="search-container">
-            <input type="text" placeholder="Search for a prompt..." class="search-input">
-            <i class="fas fa-filter filter-icon"></i>
+        <div class="breadcrumbs">
+            <a href="#">Prompt Library</a> > <a href="#">SEO</a> > <a href="#">SEO Content Roadmap</a>
         </div>
-        <p class="all-prompts">All Prompts</p>
-        <div class="prompt-grid">
-            <div class="prompt-library-card">
-                <p class="category">SEO</p>
-                <h3>SEO Content Roadmap</h3>
-                <p class="description">Purpose Transform your content strategy into a data-driven SEO engine that systematically captures organic traffic, builds topical authority, and conv sdhdhsdhsdhsjhsjhhs
-                    sjhsdjsdhsdjhsdjhsdjh.. what aboy ny abc h aajjas ajs asjasjas asjashashasa ajhasjhas .</p>
-                <div class="author">
-                    <img src="assets/images/author-avatar.png" alt="Jane Cooper" class="author-img">
-                    <div>
-                        <p class="author-name">Jane Cooper</p>
-                        <p class="author-role">Author</p>
+        <div class="row">
+            <div class="col-8">
+                <div class="prompt-detail-section">
+                    <div class="author">
+                        <img src="assets/images/author-avatar.png" alt="Jane Cooper" class="author-img">
+                        <div>
+                            <p class="author-name">Jane Cooper</p>
+                            <p class="author-role">Author</p>
+                        </div>
+                    </div>
+                    <h6>SEO Content Roadmap</h6>
+                    <p class="small">Version 1</p>
+                    <p class="description mt-0">Purpose Transform your content strategy into a data-driven SEO engine that systematically captures organic traffic, builds topical authority, and converts visitors into customers. This prompt outlines a step-by-step plan to identify keyword opportunities, create high-quality content, and optimize for search engines, ensuring long-term growth and visibility.</p>
+                    <div class="icons">
+                        <i class="fas fa-copy"></i>&nbsp;&nbsp;
+                        <i class="fas fa-share-alt icon"></i>
                     </div>
                 </div>
-                <button class="view-prompt-btn">View Prompt</button>
-                <div class="icons">
-                    <i class="fas fa-link icon"></i>
-                    <i class="fas fa-share-alt icon"></i>
-                    <i class="fas fa-ellipsis-h icon"></i>
+            </div>
+            <div class="col-4">
+                <div class="sidebar-detail">
+                    <h6>How to Use this Prompt</h6>
+                    <ol>
+                        <li>Copy the prompt and use it directly in AI Chat.</li>
+                        <li>If there are any parts in {brackets}, replace them with your info.</li>
+                        <li>Follow any steps or tips inside the prompt.</li>
+                        <li>Enjoy your conversation.</li>
+                    </ol>
+                    <button class="explore-btn">Explore More Prompts</button>
                 </div>
             </div>
-            <!-- Additional prompt cards to make it 4 in a row -->
+        </div>
+        <p class="more-prompts-title">More prompts like this</p>
+        <div class="more-prompts-grid">
             <div class="prompt-library-card">
-                <p class="category">Marketing</p>
-                <h3>Social Media Strategy</h3>
-                <p class="description">Create a comprehensive plan to boost your brand's presence on social media platforms.</p>
+                <p class="category">SEO</p>
+                <h3>Keyword Research Guide</h3>
+                <p class="description">Discover high-impact keywords to fuel your SEO strategy and drive targeted traffic to your site.</p>
                 <div class="author">
                     <img src="assets/images/author-avatar.png" alt="John Doe" class="author-img">
                     <div>
@@ -463,9 +524,9 @@
                 </div>
             </div>
             <div class="prompt-library-card">
-                <p class="category">Business</p>
-                <h3>Business Plan Outline</h3>
-                <p class="description">Develop a detailed business plan to guide your startup's growth and success.</p>
+                <p class="category">SEO</p>
+                <h3>Content Optimization Pro</h3>
+                <p class="description">Optimize existing content for better search rankings and user engagement with proven techniques.</p>
                 <div class="author">
                     <img src="assets/images/author-avatar.png" alt="Jane Smith" class="author-img">
                     <div>
@@ -481,9 +542,9 @@
                 </div>
             </div>
             <div class="prompt-library-card">
-                <p class="category">Coding</p>
-                <h3>Code Review Checklist</h3>
-                <p class="description">Ensure code quality with this step-by-step review checklist for developers.</p>
+                <p class="category">SEO</p>
+                <h3>Link Building Strategy</h3>
+                <p class="description">Build authoritative backlinks to boost your site's domain authority and improve rankings.</p>
                 <div class="author">
                     <img src="assets/images/author-avatar.png" alt="Mike Johnson" class="author-img">
                     <div>
@@ -498,88 +559,46 @@
                     <i class="fas fa-ellipsis-h icon"></i>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Filter Modal -->
-    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="filterModalLabel">Filter</h5>
+            <div class="prompt-library-card">
+                <p class="category">SEO</p>
+                <h3>Technical SEO Audit</h3>
+                <p class="description">Conduct a comprehensive technical audit to fix site issues and enhance crawlability.</p>
+                <div class="author">
+                    <img src="assets/images/author-avatar.png" alt="Sarah Lee" class="author-img">
+                    <div>
+                        <p class="author-name">Sarah Lee</p>
+                        <p class="author-role">Author</p>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <div class="mt-0">
-                        <h6>Categories</h6>
-                        <div class="category-grid">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryAssistant">
-                                <label class="form-check-label" for="categoryAssistant">Assistant</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryBusiness" checked>
-                                <label class="form-check-label" for="categoryBusiness">Business</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryCoding">
-                                <label class="form-check-label" for="categoryCoding">Coding</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryDesign">
-                                <label class="form-check-label" for="categoryDesign">Design</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryFinances">
-                                <label class="form-check-label" for="categoryFinances">Finances</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryMarketing">
-                                <label class="form-check-label" for="categoryMarketing">Marketing</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryCopywriting">
-                                <label class="form-check-label" for="categoryCopywriting">Copywriting</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryEducation">
-                                <label class="form-check-label" for="categoryEducation">Education</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="categoryHealth">
-                                <label class="form-check-label" for="categoryHealth">Health</label>
-                            </div>
-                        </div>
+                <button class="view-prompt-btn">View Prompt</button>
+                <div class="icons">
+                    <i class="fas fa-link icon"></i>
+                    <i class="fas fa-share-alt icon"></i>
+                    <i class="fas fa-ellipsis-h icon"></i>
+                </div>
+            </div>
+            <div class="prompt-library-card">
+                <p class="category">SEO</p>
+                <h3>Technical SEO Audit</h3>
+                <p class="description">Conduct a comprehensive technical audit to fix site issues and enhance crawlability.</p>
+                <div class="author">
+                    <img src="assets/images/author-avatar.png" alt="Sarah Lee" class="author-img">
+                    <div>
+                        <p class="author-name">Sarah Lee</p>
+                        <p class="author-role">Author</p>
                     </div>
-                    <div class="mt-1">
-                        <h6>Date Created</h6>
-                        <input type="date" class="date-input search-input" value="2020-12-01">
-                    </div>
-                    <div class="mt-3">
-                        <h6>Type</h6>
-                        <div class="type-tag selected" onclick="selectType(this)" data-type="rarely">Rarely Used</div>
-                        <div class="type-tag" onclick="selectType(this)" data-type="mostly">Mostly Used</div>
-                        <div class="type-tag" onclick="selectType(this)" data-type="saved">Saved</div>
-                    </div>
-                    <div class="mt-3 d-flex justify-content-between">
-                        <button type="button" class="btn btn-cancel w-50" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-apply w-50">Apply Filter</button>
-                    </div>
+                </div>
+                <button class="view-prompt-btn">View Prompt</button>
+                <div class="icons">
+                    <i class="fas fa-link icon"></i>
+                    <i class="fas fa-share-alt icon"></i>
+                    <i class="fas fa-ellipsis-h icon"></i>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.querySelector('.filter-icon').addEventListener('click', function() {
-            new bootstrap.Modal(document.getElementById('filterModal')).show();
-        });
-
-        function selectType(element) {
-            document.querySelectorAll('.type-tag').forEach(tag => tag.classList.remove('selected'));
-            element.classList.add('selected');
-        }
-    </script>
 </body>
 
 </html>
