@@ -460,6 +460,7 @@
         <div class="menu-item"><i class="fas fa-home"></i></div>
         <div class="menu-item active"><i class="fas fa-layer-group"></i></div>
         <div class="menu-item"><i class="fas fa-plus"></i></div>
+        <div class="menu-item"><i class="fas fa-gear"></i></div>
         <img src="assets/images/user-avatar.png" alt="User Avatar" class="user-avatar">
     </div>
     <div class="main-content">
