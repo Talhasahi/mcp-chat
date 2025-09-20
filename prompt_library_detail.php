@@ -22,8 +22,16 @@
     </div>
     <div class="main-content">
         <div class="main-header" style="margin: 10px 0 5px 0;">
-            <a href="prompt_library.php" class="back-icon"><i class="fas fa-arrow-left"></i></a>
-            <p class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SEO Content Roadmap</p>
+            <div class="header-left">
+                <a href="prompt_library.php" class="back-icon"><i class="fas fa-arrow-left"></i></a>
+                <p class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SEO Content Roadmap</p>
+            </div>
+            <i class="fas fa-sign-out-alt logout-icon" onclick="toggleLogoutDropdown()"></i>
+            <div class="logout-dropdown" id="logoutDropdown">
+                <div class="logout-item" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i> Log out
+                </div>
+            </div>
         </div>
         <hr class="main-header-line">
         <div class="breadcrumbs">
@@ -157,6 +165,27 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleLogoutDropdown() {
+            const dropdown = document.getElementById('logoutDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        function handleLogout() {
+            // Add logout logic here (e.g., redirect or API call)
+            alert('Logged out!'); // Placeholder action
+            document.getElementById('logoutDropdown').classList.remove('active');
+        }
+
+        // Close dropdown if clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('logoutDropdown');
+            const icon = document.querySelector('.logout-icon');
+            if (!icon.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 
 </html>

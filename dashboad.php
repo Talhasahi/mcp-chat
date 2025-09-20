@@ -22,8 +22,16 @@
     </div>
         <div class="main-content" style="padding: 0 20px 120px 20px;">
             <div class="main-header" style="margin: 10px 0 5px 0;">
-                <i class="fas fa-home"></i>
-                <p class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI Desk</p>
+                <div class="header-left">
+                    <i class="fas fa-home"></i>
+                    <p class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI Desk</p>
+                </div>
+                <i class="fas fa-sign-out-alt logout-icon" onclick="toggleLogoutDropdown()"></i>
+                <div class="logout-dropdown" id="logoutDropdown">
+                    <div class="logout-item" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Log out
+                    </div>
+                </div>
             </div>
             <hr class="main-header-line">
             <img src="assets/images/logo-icon.png" alt="Central Logo" class="central-logo">
@@ -66,6 +74,28 @@
         <i class="fas fa-microphone mic"></i>
         <button class="send-btn"><i class="fas fa-paper-plane"></i></button>
     </div>
+
+    <script>
+        function toggleLogoutDropdown() {
+            const dropdown = document.getElementById('logoutDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        function handleLogout() {
+            // Add logout logic here (e.g., redirect or API call)
+            alert('Logged out!'); // Placeholder action
+            document.getElementById('logoutDropdown').classList.remove('active');
+        }
+
+        // Close dropdown if clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('logoutDropdown');
+            const icon = document.querySelector('.logout-icon');
+            if (!icon.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 
 </html>
