@@ -389,7 +389,7 @@
     <div class="main-content">
         <div class="main-header" style="margin: 10px 0 5px 0;">
             <i class="fas fa-home"></i>
-            <p class="title">AI Desk</p>
+            <p class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI Desk</p>
         </div>
         <hr class="main-header-line">
         <img src="assets/images/logo-icon.png" alt="Central Logo" class="central-logo">
