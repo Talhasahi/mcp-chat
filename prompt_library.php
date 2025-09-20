@@ -1,25 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP Chat - Prompt Library</title>
-    <link rel="icon" type="image/png" href="assets/images/favicon.png">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/mcp.css">
-</head>
-
-<body>
-    <div class="sidebar">
-        <img src="assets/images/logo-icon.png" alt="MCP Chat Logo" class="logo">
-        <div class="menu-item"><i class="fas fa-home"></i></div>
-        <div class="menu-item active"><i class="fas fa-layer-group"></i></div>
-        <div class="menu-item"><i class="fas fa-plus"></i></div>
-        <div class="menu-item"><i class="fas fa-gear"></i></div>
-        <img src="assets/images/user-avatar.png" alt="User Avatar" class="user-avatar">
-    </div>
+<?php 
+$page_title = "MCP Chat - Prompt Library";
+include 'includes/header.php';
+include 'includes/sidebar.php';
+?>
     <div class="main-content">
 
         <div class="main-header" style="margin: 10px 0 5px 0;">
@@ -53,7 +36,7 @@
                         <p class="author-role">Author</p>
                     </div>
                 </div>
-                <button class="action-btn">View Prompt</button>
+                <button class="action-btn" onclick="window.location.href='prompt_library_detail.php'">View Prompt</button>
                 <div class="icons">
                     <i class="fas fa-link icon"></i>
                     <i class="fas fa-share-alt icon"></i>
@@ -72,7 +55,7 @@
                         <p class="author-role">Author</p>
                     </div>
                 </div>
-                <button class="action-btn">View Prompt</button>
+                <button class="action-btn" onclick="window.location.href='prompt_library_detail.php'">View Prompt</button>
                 <div class="icons">
                     <i class="fas fa-link icon"></i>
                     <i class="fas fa-share-alt icon"></i>
@@ -90,7 +73,7 @@
                         <p class="author-role">Author</p>
                     </div>
                 </div>
-                <button class="action-btn">View Prompt</button>
+                <button class="action-btn" onclick="window.location.href='prompt_library_detail.php'">View Prompt</button>
                 <div class="icons">
                     <i class="fas fa-link icon"></i>
                     <i class="fas fa-share-alt icon"></i>
@@ -108,7 +91,7 @@
                         <p class="author-role">Author</p>
                     </div>
                 </div>
-                <button class="action-btn">View Prompt</button>
+                <button class="action-btn" onclick="window.location.href='prompt_library_detail.php'">View Prompt</button>
                 <div class="icons">
                     <i class="fas fa-link icon"></i>
                     <i class="fas fa-share-alt icon"></i>
@@ -186,7 +169,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.querySelector('.filter-icon').addEventListener('click', function() {
             new bootstrap.Modal(document.getElementById('filterModal')).show();
@@ -196,27 +178,5 @@
             document.querySelectorAll('.type-tag').forEach(tag => tag.classList.remove('selected'));
             element.classList.add('selected');
         }
-
-        function toggleLogoutDropdown() {
-            const dropdown = document.getElementById('logoutDropdown');
-            dropdown.classList.toggle('active');
-        }
-
-        function handleLogout() {
-            // Add logout logic here (e.g., redirect or API call)
-            alert('Logged out!'); // Placeholder action
-            document.getElementById('logoutDropdown').classList.remove('active');
-        }
-
-        // Close dropdown if clicking outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('logoutDropdown');
-            const icon = document.querySelector('.logout-icon');
-            if (!icon.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.remove('active');
-            }
-        });
     </script>
-</body>
-
-</html>
+<?php include 'includes/footer.php'; ?>
