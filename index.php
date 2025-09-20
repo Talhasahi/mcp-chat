@@ -16,7 +16,7 @@
     <img src="assets/images/logo-icon.png" alt="MCP Chat Logo" class="logo">
     <h1 class="login-heading">Welcome Back</h1>
     <p class="login-subtext">Please sign in to pick up where you left off.</p>
-    <form>
+    <form action="dashboad.php" method="post">
       <p class="label-text">Email</p>
       <div class="form-group">
         <input type="email" class="form-control" placeholder="johndoe@gmail.com" value="" required>

@@ -22,7 +22,7 @@
                     <input type="email" class="form-control" placeholder="johndoe@gmail.com" required>
                 </div>
                 <button type="submit" class="btn-signin">Continue →</button>
-                <div class="signup-link">Remember Password <a href="#">Sign in</a></div>
+                <div class="signup-link">Remember Password <a href="index.php">Sign in</a></div>
             </form>
         </div>
     </body>
