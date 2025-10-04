@@ -1,7 +1,9 @@
 <?php
 $page_title = "MCP Chat - My Prompts";
+$page_icon = "fas fa-plus";
 include 'includes/header.php';
 include 'includes/sidebar.php';
+
 ?>
 
 <style>
@@ -177,19 +179,8 @@ include 'includes/sidebar.php';
 </style>
 
 <div class="main-content" style="padding: 0 20px 20px 20px;">
-    <div class="main-header" style="margin: 10px 0 5px 0;">
-        <div class="header-left">
-            <i class="fas fa-plus"></i>
-            <p class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My Prompts</p>
-        </div>
-        <i class="fas fa-sign-out-alt logout-icon" onclick="toggleLogoutDropdown()"></i>
-        <div class="logout-dropdown" id="logoutDropdown">
-            <div class="logout-item" onclick="handleLogout()">
-                <i class="fas fa-sign-out-alt"></i> Log out
-            </div>
-        </div>
-    </div>
-    <hr class="main-header-line">
+    <?php include  'includes/common-header.php'; ?>
+
     <div class="row">
         <!-- Left Sidebar (col-3) -->
         <div class="col-3">
