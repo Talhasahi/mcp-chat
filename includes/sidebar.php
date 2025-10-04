@@ -14,5 +14,8 @@
     <a style="text-decoration: none;" href="settings.php" class="menu-item <?php echo (basename($_SERVER['PHP_SELF']) == 'settings.php') ? 'active' : ''; ?>">
         <i class="fas fa-gear"></i>
     </a>
+    <a style="text-decoration: none;" href="create_prompt.php" class="menu-item <?php echo (basename($_SERVER['PHP_SELF']) == 'create_prompt.php') ? 'active' : ''; ?>">
+        <i class="fas fa-gear"></i>
+    </a>
     <img src="assets/images/user-avatar.png" alt="User Avatar" class="user-avatar">
 </div>
