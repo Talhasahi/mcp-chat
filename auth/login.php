@@ -75,10 +75,54 @@ try {
 
     // Decode token, set session
     $token = $api_result['token'];
-    $payload = decode_jwt($token); // From config.php
-    $_SESSION['user_id'] = $payload['id'];
-    $_SESSION['role'] = $payload['role'];
-    $_SESSION['email'] = $email;
+    // Step 2: Call /me API with token
+    $me_url = $api_base_url . '/me';
+    $ch = curl_init($me_url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token
+        ],
+        CURLOPT_TIMEOUT => 10
+    ]);
+    $me_response = curl_exec($ch);
+    $me_http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if (!$me_response) {
+        http_response_code(500);
+        echo json_encode(['error' => 'User data API connection failed']);
+        exit;
+    }
+
+    $me_result = json_decode($me_response, true);
+    if (!is_array($me_result)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Invalid user data API response']);
+        exit;
+    }
+
+    if (isset($me_result['error'])) {
+        http_response_code($me_http_code ?: 401);
+        echo json_encode(['error' => $me_result['error']]);
+        exit;
+    }
+
+    // Validate required fields
+    if (!isset($me_result['id'], $me_result['email'], $me_result['role'], $me_result['hotelId'], $me_result['hotel'])) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Incomplete user data']);
+        exit;
+    }
+
+    // Step 3: Store in session
+    $_SESSION['user_id'] = $me_result['id'];
+    $_SESSION['email'] = $me_result['email'];
+    $_SESSION['role'] = $me_result['role'];
+    $_SESSION['hotel_id'] = $me_result['hotelId'];
+    $_SESSION['hotel_name'] = $me_result['hotel']['name'];
+    $_SESSION['hotel_is_active'] = $me_result['hotel']['isActive'];
     $_SESSION['token'] = $token; // Store for future API calls
 
     echo json_encode(['token' => $token]); // Return same as Node.js

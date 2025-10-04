@@ -17,19 +17,25 @@ include 'includes/sidebar.php';
         <h6>Account Detail</h6>
         <div class="form-row">
             <div class="form-group">
-                <label class="form-label">Username</label>
-                <input type="text" class="form-input" value="JaneCooper" readonly>
+                <label class="form-label">Hotel</label>
+                <input disabled type="text" class="form-input" value="<?php echo htmlspecialchars($_SESSION['hotel_name'] ?? 'N/A'); ?>" readonly>
             </div>
             <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-input" value="jane.cooper@example.com" readonly>
+                <label class="form-label">My Role</label>
+                <input disabled type="text" class="form-input" value="<?php echo htmlspecialchars($_SESSION['role'] ?? 'N/A'); ?>" readonly>
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label class="form-label">Phone Number</label>
-                <input type="tel" class="form-input" value="+1-555-123-4567" readonly>
+                <label class="form-label">Username</label>
+                <input disabled type="text" class="form-input" value="<?php echo htmlspecialchars($_SESSION['user_id'] ?? 'N/A'); ?>" readonly>
             </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input disabled type="email" class="form-input" value="<?php echo htmlspecialchars($_SESSION['email'] ?? 'N/A'); ?>" readonly>
+            </div>
+        </div>
+        <div class="form-row">
             <div class="form-group">
                 <label class="form-label">Change Password</label>
                 <input type="password" class="form-input" placeholder="Enter new password">
