@@ -199,3 +199,29 @@ function put_user_preferences($data)
 
     return $result;
 }
+
+// Helper for authenticated API calls
+function call_authenticated_api($endpoint, $data, $method = 'POST')
+{
+    global $api_base_url;
+    $url = $api_base_url . $endpoint;
+    $ch = curl_init($url);
+    $headers = [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . ($_SESSION['token'] ?? '') // Bearer token from session
+    ];
+    $opts = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_HTTPHEADER => $headers
+    ];
+    if ($method === 'POST') {
+        $opts[CURLOPT_POST] = true;
+        $opts[CURLOPT_POSTFIELDS] = json_encode($data);
+    }
+    curl_setopt_array($ch, $opts);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return ['response' => $response, 'code' => $http_code];
+}

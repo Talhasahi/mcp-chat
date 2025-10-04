@@ -160,6 +160,44 @@ $page_icon = "fas fa-plus";
             tagInput.value = '';
         }
     });
+    // New: AJAX form submit handler
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('createPromptForm');
+        const saveBtn = form.querySelector('.save-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Stop default POST
+
+            // Show loading (optional)
+            saveBtn.textContent = 'Creating...';
+            saveBtn.disabled = true;
+
+            // Collect data (tags already in hidden)
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('auth/prompts.php', {
+                    method: 'POST',
+                    body: formData // Multipart for form fields
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert(result.message || 'Prompt created!'); // Or show green message span
+                    window.location.href = 'my_prompt.php'; // Redirect to list
+                } else {
+                    alert(result.error || 'Failed to create prompt');
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            } finally {
+                // Reset button
+                saveBtn.textContent = 'Create Prompt';
+                saveBtn.disabled = false;
+            }
+        });
+    });
 </script>
 
 <?php include 'includes/footer.php'; ?>
