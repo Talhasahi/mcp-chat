@@ -160,3 +160,42 @@ function get_user_preferences()
     // Success – return the whole payload (you can pick only the parts you need later)
     return $data;
 }
+
+// Simple PUT /settings/preferences
+function put_user_preferences($data)
+{
+    global $api_base_url;
+    $token = $_SESSION['token'] ?? '';
+
+    if (!$token) {
+        return ['error' => 'No authentication token - please log in again.'];
+    }
+
+    $url = rtrim($api_base_url, '/') . '/settings/preferences';
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => 'PUT',
+        CURLOPT_POSTFIELDS => json_encode($data),
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token
+        ],
+        CURLOPT_TIMEOUT => 10
+    ]);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($response === false) {
+        return ['error' => 'Failed to connect to API.'];
+    }
+
+    $result = json_decode($response, true);
+    if (!is_array($result) || $http_code !== 200) {
+        return ['error' => $result['error'] ?? 'Failed to save preferences'];
+    }
+
+    return $result;
+}

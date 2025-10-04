@@ -56,11 +56,12 @@ $prefs_error = isset($prefs['error']) ? $prefs['error'] : null;
             </p>
         <?php endif; ?>
         <p>Manage your preferences</p>
+        <span id="preferences-message" style="color: red; font-size: 0.9rem; display: none;"></span>
         <div class="form-group">
             <label class="form-label">Default Provider</label>
             <select id="default-provider" class="form-select">
                 <option value="">Select Default</option>
-                <option value="openai" <?php echo isset($prefs['userPrefs']['defaultProvider']) && $prefs['userPrefs']['defaultProvider'] === ' ' ? 'selected' : ''; ?>>OpenAI</option>
+                <option value="openai" <?php echo isset($prefs['userPrefs']['defaultProvider']) && $prefs['userPrefs']['defaultProvider'] === 'openai' ? 'selected' : ''; ?>>OpenAI</option>
                 <option value="deepseek" <?php echo isset($prefs['userPrefs']['defaultProvider']) && $prefs['userPrefs']['defaultProvider'] === 'deepseek' ? 'selected' : ''; ?>>Deepseek</option>
                 <option value="perplexity" <?php echo isset($prefs['userPrefs']['defaultProvider']) && $prefs['userPrefs']['defaultProvider'] === 'perplexity' ? 'selected' : ''; ?>>Perplexity</option>
             </select>
@@ -108,23 +109,90 @@ $prefs_error = isset($prefs['error']) ? $prefs['error'] : null;
             </div>
         </div>
         <div class="button-group">
-            <button class="save-btn">Save Changes</button>
+            <button id="preferences-save" class="save-btn">Save Changes</button>
             <button class="cancel-btn">Cancel</button>
         </div>
     </div>
 </div>
 
 <script>
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            const tabId = this.getAttribute('data-tab');
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                const tabId = this.getAttribute('data-tab');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(tabId).style.display = 'block';
             });
-            document.getElementById(tabId).style.display = 'block';
         });
+
+        const saveButton = document.getElementById('preferences-save');
+        if (saveButton) {
+            saveButton.addEventListener('click', async () => {
+                const messageSpan = document.getElementById('preferences-message');
+                messageSpan.style.display = 'none';
+                messageSpan.textContent = '';
+
+                const enabledProviders = [];
+                ['openai', 'deepseek', 'perplexity'].forEach(provider => {
+                    if (document.getElementById(`provider-${provider}`).checked) {
+                        enabledProviders.push(provider);
+                    }
+                });
+
+                const defaultProvider = document.getElementById('default-provider').value;
+                const models = {
+                    openai: document.getElementById('model-openai').value,
+                    deepseek: document.getElementById('model-deepseek').value,
+                    perplexity: document.getElementById('model-perplexity').value
+                };
+
+                if (enabledProviders.length === 0) {
+                    messageSpan.textContent = 'At least one provider must be enabled';
+                    messageSpan.style.display = 'block';
+                    return;
+                }
+                if (defaultProvider && !enabledProviders.includes(defaultProvider)) {
+                    messageSpan.textContent = 'Default provider must be enabled';
+                    messageSpan.style.display = 'block';
+                    return;
+                }
+
+                const data = {
+                    enabledProviders,
+                    defaultProvider: defaultProvider || null,
+                    models
+                };
+
+                try {
+                    const response = await fetch('auth/save_preferences.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) {
+                        messageSpan.textContent = result.error || 'Failed to save preferences';
+                        messageSpan.style.display = 'block';
+                        return;
+                    }
+
+                    messageSpan.textContent = result.message || 'Preferences saved successfully';
+                    messageSpan.style.color = 'green';
+                    messageSpan.style.display = 'block';
+                    setTimeout(() => location.reload(), 1000);
+                } catch (error) {
+                    messageSpan.textContent = 'Network error';
+                    messageSpan.style.display = 'block';
+                }
+            });
+        }
     });
 </script>
 <?php include 'includes/footer.php'; ?>
