@@ -1,3 +1,7 @@
+<?php
+include 'config.php';
+require_login();
+?>
 <!DOCTYPE html>
 <html lang="en">
 

@@ -1,6 +1,6 @@
 <div class="sidebar">
     <img src="assets/images/logo-icon.png" alt="MCP Chat Logo" class="logo">
-    <a style="text-decoration: none;" href="dashboad.php" class="menu-item <?php echo (basename($_SERVER['PHP_SELF']) == 'dashboad.php') ? 'active' : ''; ?>">
+    <a style="text-decoration: none;" href="dashboard.php" class="menu-item <?php echo (basename($_SERVER['PHP_SELF']) == 'dashboard.php') ? 'active' : ''; ?>">
         <i class="fas fa-home"></i>
     </a>
     <a style="text-decoration: none;" href="prompt_library.php"

@@ -16,10 +16,10 @@
     <img src="assets/images/logo-icon.png" alt="MCP Chat Logo" class="logo">
     <h1 class="login-heading">Welcome Back</h1>
     <p class="login-subtext">Please sign in to pick up where you left off.</p>
-    <form action="dashboad.php" method="post">
+    <form id="loginForm">
       <p class="label-text">Email</p>
       <div class="form-group">
-        <input type="email" class="form-control" placeholder="johndoe@gmail.com" value="" required>
+        <input type="email" id="email" class="form-control" placeholder="johndoe@gmail.com" value="" required>
       </div>
       <p class="label-text">Password</p>
       <div class="form-group">
@@ -47,8 +47,54 @@
           toggleIcon.innerHTML = '<i class="fas fa-eye-slash"></i>';
         }
       });
+
+      // AJAX login via proxy
+      const form = document.getElementById('loginForm');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+          email: emailInput.value.trim(),
+          password: passwordInput.value
+        };
+
+        try {
+          const response = await fetch('auth/login.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            localStorage.setItem('token', result.token); // Optional client storage
+            window.location.href = 'dashboard.php'; // Redirect (session set)
+          } else {
+            alert(result.error || 'Login failed');
+          }
+        } catch (error) {
+          alert('Network error: ' + error.message);
+        }
+      });
+
+      // Auto-redirect if logged in
+      fetch('check_session.php')
+        .then(res => res.json())
+        .then(data => {
+          if (data.logged_in) window.location.href = 'dashboard.php';
+        })
+        .catch(() => {}); // Ignore errors
     </script>
+
+
   </div>
 </body>
+
+
 
 </html>
