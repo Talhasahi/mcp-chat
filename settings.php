@@ -4,10 +4,12 @@ $page_icon = "fas fa-gear";
 include 'includes/header.php';
 include 'includes/sidebar.php';
 
+// Get user preferences
+$prefs = get_user_preferences();
+$prefs_error = isset($prefs['error']) ? $prefs['error'] : null;
 ?>
+
 <div class="main-content">
-
-
     <?php include 'includes/common-header.php'; ?>
     <div class="tabs">
         <div class="tab active" data-tab="account">Account Detail</div>
@@ -48,20 +50,60 @@ include 'includes/sidebar.php';
     </div>
     <div class="tab-content" id="preferences" style="display: none;">
         <h6>Preferences</h6>
+        <?php if ($prefs_error): ?>
+            <p style="color: red; font-size: 0.9rem; margin-top: 0;">
+                <?php echo htmlspecialchars($prefs_error); ?>
+            </p>
+        <?php endif; ?>
         <p>Manage your preferences</p>
-        <div class="toggle-group">
-            <label class="form-label">A/B Testing</label>
-            <div class="toggle-btn" id="abTestingToggle" onclick="toggleABTesting()">
-                <div class="toggle-circle"></div>
+        <div class="form-group">
+            <label class="form-label">Default Provider</label>
+            <select id="default-provider" class="form-select">
+                <option value="">Select Default</option>
+                <option value="openai" <?php echo isset($prefs['userPrefs']['defaultProvider']) && $prefs['userPrefs']['defaultProvider'] === ' ' ? 'selected' : ''; ?>>OpenAI</option>
+                <option value="deepseek" <?php echo isset($prefs['userPrefs']['defaultProvider']) && $prefs['userPrefs']['defaultProvider'] === 'deepseek' ? 'selected' : ''; ?>>Deepseek</option>
+                <option value="perplexity" <?php echo isset($prefs['userPrefs']['defaultProvider']) && $prefs['userPrefs']['defaultProvider'] === 'perplexity' ? 'selected' : ''; ?>>Perplexity</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Enabled Providers</label>
+            <div class="toggle-group">
+                <label>OpenAI
+                    <input type="checkbox" id="provider-openai"
+                        <?php echo isset($prefs['userPrefs']['enabledProviders']) && in_array('openai', $prefs['userPrefs']['enabledProviders']) ? 'checked' : ''; ?>>
+                </label>
+                <label>Deepseek
+                    <input type="checkbox" id="provider-deepseek"
+                        <?php echo isset($prefs['userPrefs']['enabledProviders']) && in_array('deepseek', $prefs['userPrefs']['enabledProviders']) ? 'checked' : ''; ?>>
+                </label>
+                <label>Perplexity
+                    <input type="checkbox" id="provider-perplexity"
+                        <?php echo isset($prefs['userPrefs']['enabledProviders']) && in_array('perplexity', $prefs['userPrefs']['enabledProviders']) ? 'checked' : ''; ?>>
+                </label>
             </div>
         </div>
-        <div class="model-section" id="modelSection">
-            <h6>Model 1</h6>
-            <div class="form-group">
-                <label class="form-label">Select Model</label>
-                <select class="form-select">
-                    <option value="grok">Grok</option>
-                    <option value="chatgpt">Chat GPT</option>
+        <div class="form-group" id="models-section">
+            <label class="form-label">Models</label>
+            <div id="model-openai-group">
+                <label>OpenAI Model</label>
+                <select id="model-openai" class="form-select">
+                    <option value="gpt-4o-mini" <?php echo isset($prefs['userPrefs']['models']['openai']) && $prefs['userPrefs']['models']['openai'] === 'gpt-4o-mini' ? 'selected' : ''; ?>>gpt-4o-mini</option>
+                    <option value="gpt-4o" <?php echo isset($prefs['userPrefs']['models']['openai']) && $prefs['userPrefs']['models']['openai'] === 'gpt-4o' ? 'selected' : ''; ?>>gpt-4o</option>
+                    <option value="gpt-3.5-turbo" <?php echo isset($prefs['userPrefs']['models']['openai']) && $prefs['userPrefs']['models']['openai'] === 'gpt-3.5-turbo' ? 'selected' : ''; ?>>gpt-3.5-turbo</option>
+                </select>
+            </div>
+            <div id="model-deepseek-group">
+                <label>Deepseek Model</label>
+                <select id="model-deepseek" class="form-select">
+                    <option value="deepseek-chat" <?php echo isset($prefs['userPrefs']['models']['deepseek']) && $prefs['userPrefs']['models']['deepseek'] === 'deepseek-chat' ? 'selected' : ''; ?>>deepseek-chat</option>
+                    <option value="deepseek-coder" <?php echo isset($prefs['userPrefs']['models']['deepseek']) && $prefs['userPrefs']['models']['deepseek'] === 'deepseek-coder' ? 'selected' : ''; ?>>deepseek-coder</option>
+                </select>
+            </div>
+            <div id="model-perplexity-group">
+                <label>Perplexity Model</label>
+                <select id="model-perplexity" class="form-select">
+                    <option value="sonar" <?php echo isset($prefs['userPrefs']['models']['perplexity']) && $prefs['userPrefs']['models']['perplexity'] === 'sonar' ? 'selected' : ''; ?>>sonar</option>
+                    <option value="llama-3" <?php echo isset($prefs['userPrefs']['models']['perplexity']) && $prefs['userPrefs']['models']['perplexity'] === 'llama-3' ? 'selected' : ''; ?>>llama-3</option>
                 </select>
             </div>
         </div>
@@ -77,7 +119,6 @@ include 'includes/sidebar.php';
         tab.addEventListener('click', function() {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
-
             const tabId = this.getAttribute('data-tab');
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.style.display = 'none';
@@ -85,12 +126,5 @@ include 'includes/sidebar.php';
             document.getElementById(tabId).style.display = 'block';
         });
     });
-
-    function toggleABTesting() {
-        const toggleBtn = document.getElementById('abTestingToggle');
-        const modelSection = document.getElementById('modelSection');
-        toggleBtn.classList.toggle('active');
-        modelSection.classList.toggle('active');
-    }
 </script>
 <?php include 'includes/footer.php'; ?>

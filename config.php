@@ -114,3 +114,49 @@ function logout()
     header('Location: index.php');
     exit;
 }
+
+
+// ---------------------------------------------------
+function get_user_preferences()
+{
+    // $api_base_url must be defined earlier in this file (you already have it)
+    global $api_base_url;
+
+    // Token is stored in the session after login
+    $token = $_SESSION['token'] ?? '';
+    if (!$token) {
+        return ['error' => 'No authentication token – please log in again.'];
+    }
+
+    $url = rtrim($api_base_url, '/') . '/settings/preferences';
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token,
+        ],
+        CURLOPT_TIMEOUT => 10,
+    ]);
+
+    $raw = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // Basic connection problem
+    if ($raw === false) {
+        return ['error' => 'Failed to contact the API.'];
+    }
+
+    $data = json_decode($raw, true);
+
+    // If JSON failed or API returned a non-200 with an error field
+    if (!is_array($data) || $code !== 200) {
+        $msg = $data['error'] ?? 'Unknown API error';
+        return ['error' => $msg];
+    }
+
+    // Success – return the whole payload (you can pick only the parts you need later)
+    return $data;
+}
