@@ -42,21 +42,38 @@ try {
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($http_code !== 200 || !$response) {
-        http_response_code($http_code ?: 500);
-        echo json_encode(['error' => 'API error']);
+    // Only fail on no response (connection issue)
+    if (!$response) {
+        http_response_code(500);
+        echo json_encode(['error' => 'API connection failed']);
         exit;
     }
 
+    // Always parse JSON response
     $api_result = json_decode($response, true);
 
+    // Fail if invalid JSON
+    if (!is_array($api_result)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Invalid API response']);
+        exit;
+    }
+
+    // Forward any error from API (e.g., "Invalid credentials")
     if (isset($api_result['error'])) {
         http_response_code(401);
         echo json_encode(['error' => $api_result['error']]);
         exit;
     }
 
-    // Success: Decode token, set session
+    // Success: Must have token
+    if (!isset($api_result['token'])) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Missing token in response']);
+        exit;
+    }
+
+    // Decode token, set session
     $token = $api_result['token'];
     $payload = decode_jwt($token); // From config.php
     $_SESSION['user_id'] = $payload['id'];

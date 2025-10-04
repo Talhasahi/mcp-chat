@@ -25,15 +25,17 @@
       <div class="form-group">
         <input type="password" id="password" class="form-control" placeholder="Password" required>
         <span class="password-toggle" id="toggleIcon"><i class="fas fa-eye-slash"></i></span>
+
       </div>
       <button type="submit" class="btn-signin">Sign In →</button>
+      <span id="error-message" class="error-message" style="color: red; font-size: 0.875em; display: none;"></span> <!-- New error span -->
       <a href="forgot.php" class="forgot-password">Forgot Password?</a>
-      <div class="signup-link">Don’t you have an account? <a href="signup.php">Sign up</a></div>
-      <div class="or">Or</div>
-      <div class="social-buttons">
+      <!-- <div class="signup-link">Don’t you have an account? <a href="signup.php">Sign up</a></div> -->
+      <!-- <div class="or">Or</div> -->
+      <!-- <div class="social-buttons">
         <img src="https://www.google.com/favicon.ico" alt="Google">
         <img src="https://www.apple.com/favicon.ico" alt="Apple">
-      </div>
+      </div> -->
     </form>
     <script>
       const password = document.getElementById("password");
@@ -52,9 +54,23 @@
       const form = document.getElementById('loginForm');
       const emailInput = document.getElementById('email');
       const passwordInput = document.getElementById('password');
+      const errorSpan = document.getElementById('error-message'); // New
+
+      // Function to show/hide error
+      function showError(message) {
+        errorSpan.textContent = message;
+        errorSpan.style.display = 'block';
+      }
+
+      function clearError() {
+        errorSpan.textContent = '';
+        errorSpan.style.display = 'none';
+      }
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        clearError(); // Clear on submit
+
         const data = {
           email: emailInput.value.trim(),
           password: passwordInput.value
@@ -72,17 +88,19 @@
           const result = await response.json();
 
           if (response.ok) {
-            localStorage.setItem('token', result.token); // Optional client storage
-            window.location.href = 'dashboard.php'; // Redirect (session set)
+            localStorage.setItem('token', result.token); // Optional
+            window.location.href = 'dashboard.php'; // Redirect
           } else {
-            alert(result.error || 'Login failed');
+            // Show red span below password
+            showError(result.error || 'Login failed');
+            passwordInput.focus(); // Refocus password for re-entry
           }
         } catch (error) {
-          alert('Network error: ' + error.message);
+          showError('Network error: ' + error.message);
         }
       });
 
-      // Auto-redirect if logged in
+      // Auto-redirect if logged in (unchanged)
       fetch('check_session.php')
         .then(res => res.json())
         .then(data => {
