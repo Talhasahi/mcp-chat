@@ -10,6 +10,7 @@ $prefs_error = isset($prefs['error']) ? $prefs['error'] : null;
 ?>
 
 <div class="main-content">
+
     <?php include 'includes/common-header.php'; ?>
     <div class="tabs">
         <div class="tab active" data-tab="account">Account Detail</div>
@@ -56,7 +57,6 @@ $prefs_error = isset($prefs['error']) ? $prefs['error'] : null;
             </p>
         <?php endif; ?>
         <p>Manage your preferences</p>
-        <span id="preferences-message" style="color: red; font-size: 0.9rem; display: none;"></span>
         <div class="form-group">
             <label class="form-label">Default Provider</label>
             <select id="default-provider" class="form-select">
@@ -130,11 +130,11 @@ $prefs_error = isset($prefs['error']) ? $prefs['error'] : null;
         });
 
         const saveButton = document.getElementById('preferences-save');
+        const loadingOverlay = document.getElementById('loading-overlay');
         if (saveButton) {
             saveButton.addEventListener('click', async () => {
-                const messageSpan = document.getElementById('preferences-message');
-                messageSpan.style.display = 'none';
-                messageSpan.textContent = '';
+                // Show loading overlay
+                loadingOverlay.style.display = 'block';
 
                 const enabledProviders = [];
                 ['openai', 'deepseek', 'perplexity'].forEach(provider => {
@@ -151,13 +151,21 @@ $prefs_error = isset($prefs['error']) ? $prefs['error'] : null;
                 };
 
                 if (enabledProviders.length === 0) {
-                    messageSpan.textContent = 'At least one provider must be enabled';
-                    messageSpan.style.display = 'block';
+                    loadingOverlay.style.display = 'none';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'At least one provider must be enabled'
+                    });
                     return;
                 }
                 if (defaultProvider && !enabledProviders.includes(defaultProvider)) {
-                    messageSpan.textContent = 'Default provider must be enabled';
-                    messageSpan.style.display = 'block';
+                    loadingOverlay.style.display = 'none';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Default provider must be enabled'
+                    });
                     return;
                 }
 
@@ -177,19 +185,32 @@ $prefs_error = isset($prefs['error']) ? $prefs['error'] : null;
                     });
 
                     const result = await response.json();
+                    // Hide loading overlay
+                    loadingOverlay.style.display = 'none';
+
                     if (!response.ok) {
-                        messageSpan.textContent = result.error || 'Failed to save preferences';
-                        messageSpan.style.display = 'block';
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: result.error || 'Failed to save preferences'
+                        });
                         return;
                     }
 
-                    messageSpan.textContent = result.message || 'Preferences saved successfully';
-                    messageSpan.style.color = 'green';
-                    messageSpan.style.display = 'block';
-                    setTimeout(() => location.reload(), 1000);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: result.message || 'Preferences saved successfully'
+                    }).then(() => {
+                        location.reload();
+                    });
                 } catch (error) {
-                    messageSpan.textContent = 'Network error';
-                    messageSpan.style.display = 'block';
+                    loadingOverlay.style.display = 'none';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Network error'
+                    });
                 }
             });
         }
