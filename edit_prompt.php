@@ -5,7 +5,8 @@ include 'includes/sidebar.php';
 $page_icon = "fas fa-edit";
 
 start_session();
-require_login(); // Ensure logged in
+require_login();
+require_author('dashboard.php');
 
 $api_base_url = $GLOBALS['api_base_url'] ?? ''; // From config.php
 $token = $_SESSION['token'] ?? '';

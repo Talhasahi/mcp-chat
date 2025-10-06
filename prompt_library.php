@@ -53,9 +53,13 @@ $has_prompts = !empty($prompts);
 
     <div class="left-right">
         <p class="section-title">All Prompts<?php echo $search ? ' for "' . htmlspecialchars($search) . '"' : ''; ?></p>
-        <button class="btn btn-blackone" onclick="window.location.href='create_prompt.php'">&nbsp;Create Prompt&nbsp;
-            <i class="fas fa-plus"></i>&nbsp;
-        </button>
+        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'author'): ?>
+            <button class="btn btn-blackone" onclick="window.location.href='create_prompt.php'">
+                &nbsp;Create Prompt&nbsp;
+                <i class="fas fa-plus"></i>&nbsp;
+            </button>
+        <?php endif; ?>
+
     </div>
 
     <?php if ($has_prompts): ?>
@@ -82,9 +86,12 @@ $has_prompts = !empty($prompts);
                     <div class="icons pointer">
                         <i class="fas fa-link icon"></i>
                         <i class="fas fa-share-alt icon"></i>
-                        <i class="fas fa-edit edit-icon"
-                            onclick="window.location.href='edit_prompt.php?id=<?php echo urlencode($promptId); ?>'"
-                            title="Edit"></i>
+                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'author'): ?>
+                            <i class="fas fa-edit edit-icon pointer"
+                                onclick="window.location.href='edit_prompt.php?id=<?php echo urlencode($promptId); ?>'"
+                                title="Edit"></i>
+                        <?php endif; ?>
+
 
 
                     </div>

@@ -3,6 +3,7 @@ $page_title = "MCP Chat - Create Prompt";
 include 'includes/header.php';
 include 'includes/sidebar.php';
 $page_icon = "fas fa-plus";
+require_author('dashboard.php');
 ?>
 <style>
     /* Custom CSS for tags - add to assets/css/mcp.css or inline */

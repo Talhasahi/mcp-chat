@@ -101,6 +101,16 @@ function require_login($redirect = 'index.php')
         exit;
     }
 }
+function require_author($redirect = 'my_prompt.php')
+{
+    require_login(); // Ensure logged in first
+    start_session();
+    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'author') {
+        // Clear any partial session if needed
+        header("Location: $redirect?error=unauthorized");
+        exit;
+    }
+}
 
 function logout()
 {
