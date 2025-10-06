@@ -15,7 +15,13 @@ $page_icon = "fas fa-layer-group";
         <input type="text" placeholder="Search for a prompt..." class="search-input">
         <i class="fas fa-filter filter-icon"></i>
     </div>
-    <p class="section-title">All Prompts</p>
+    <div class="left-right">
+        <p class="section-title">All Prompts</p>
+        <button class="btn btn-blackone" onclick="window.location.href='create_prompt.php'">&nbsp;Create Prompt&nbsp;
+            <i class="fas fa-plus"></i>&nbsp;
+        </button>
+    </div>
+
     <div class="prompt-grid">
         <div class="card">
             <p class="category">SEO</p>
