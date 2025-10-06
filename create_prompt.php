@@ -67,8 +67,12 @@ $page_icon = "fas fa-plus";
                     <label class="form-label">Category</label>
                     <select class="form-select" id="category" name="category" required>
                         <option value="">Select a category</option>
-                        <option value="customer">Customer</option>
-                        <option value="employee">Employee</option>
+                        <option value="design">Design</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="coding">Coding</option>
+                        <option value="seo">SEO</option>
+
+
                     </select>
                 </div>
                 <div class="form-group">
@@ -87,12 +91,11 @@ $page_icon = "fas fa-plus";
             </div>
             <div class="button-group">
                 <button type="submit" class="save-btn">Create Prompt</button>
-                <button type="button" class="cancel-btn" onclick="window.location.href='my_prompt.php'">Cancel</button>
+                <button type="button" class="cancel-btn" onclick="window.location.href='prompt_library.php'">Cancel</button>
             </div>
         </form>
     </div>
 </div>
-
 <script>
     // Tab switching (single tab, but for consistency)
     document.addEventListener('DOMContentLoaded', () => {
@@ -160,15 +163,18 @@ $page_icon = "fas fa-plus";
             tagInput.value = '';
         }
     });
-    // New: AJAX form submit handler
+
+    // AJAX form submit handler
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('createPromptForm');
         const saveBtn = form.querySelector('.save-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault(); // Stop default POST
 
-            // Show loading (optional)
+            // Show loading overlay and disable button
+            loadingOverlay.style.display = 'block';
             saveBtn.textContent = 'Creating...';
             saveBtn.disabled = true;
 
@@ -184,15 +190,29 @@ $page_icon = "fas fa-plus";
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert(result.message || 'Prompt created!'); // Or show green message span
-                    window.location.href = 'my_prompt.php'; // Redirect to list
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: result.message || 'Prompt created successfully'
+                    }).then(() => {
+                        window.location.href = 'prompt_library.php'; // Redirect to list
+                    });
                 } else {
-                    alert(result.error || 'Failed to create prompt');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: result.error || 'Failed to create prompt'
+                    });
                 }
             } catch (error) {
-                alert('Network error: ' + error.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Network error: ' + error.message
+                });
             } finally {
-                // Reset button
+                // Hide loading and reset button
+                loadingOverlay.style.display = 'none';
                 saveBtn.textContent = 'Create Prompt';
                 saveBtn.disabled = false;
             }

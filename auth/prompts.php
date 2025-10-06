@@ -19,8 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Parse form data (from create_prompt.php form)
 $title = trim($_POST['title'] ?? '');
 $body = trim($_POST['body'] ?? '');
-$categoryId = null; // Always null as per your example
-$version = trim($_POST['version'] ?? 'v1');
+$version = trim($_POST['version'] ?? 'v1'); // Default to "v1" to match API example
 $tags_str = trim($_POST['tags'] ?? ''); // Comma-separated from hidden input
 $tags = $tags_str ? array_map('trim', explode(',', $tags_str)) : []; // To array
 
@@ -31,40 +30,16 @@ if (empty($title) || empty($body)) {
     exit;
 }
 
+// Simplified payload: only title, body, tags, version
 $data = [
     'title' => $title,
     'body' => $body,
-    'categoryId' => $categoryId,
     'tags' => $tags,
     'version' => $version
 ];
 
 try {
-    // Prepare data (your existing code)
-    $title = trim($_POST['title'] ?? '');
-    $body = trim($_POST['body'] ?? '');
-    $categoryId = null;
-    $version = trim($_POST['version'] ?? 'v1');
-    $tags_str = trim($_POST['tags'] ?? '');
-    $tags = $tags_str ? array_map('trim', explode(',', $tags_str)) : [];
-
-    if (empty($title) || empty($body)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Title and body are required']);
-        exit;
-    }
-
-    $data = [
-        'title' => $title,
-        'body' => $body,
-        'categoryId' => $categoryId,
-        'tags' => $tags,
-        'version' => $version,
-        'hotelId' => $_SESSION['hotel_id'] ?? '', // If needed
-        'authorId' => $_SESSION['user_id'] // From login
-    ];
-
-    // Call with Bearer token
+    // Call with Bearer token (POST to /prompts)
     $result = call_authenticated_api('/prompts', $data, 'POST');
     $response = $result['response'];
     $http_code = $result['code'];
@@ -91,5 +66,5 @@ try {
     echo json_encode(['success' => true, 'message' => 'Prompt created successfully', 'data' => $api_result]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Internal server error']);
+    echo json_encode(['error' => 'Internal server error: ' . $e->getMessage()]); // Add message for debugging (remove in prod)
 }
