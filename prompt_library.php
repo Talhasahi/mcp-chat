@@ -156,7 +156,12 @@ $has_prompts = !empty($prompts);
                         </div>
                     </div>
                 </div>
-
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-input" value="<?php echo htmlspecialchars($_SESSION['user_id'] ?? 'N/A'); ?>">
+                    </div>
+                </div>
                 <div class="mt-1">
                     <h6>Date Created</h6>
                     <input type="date" class="date-input search-input" value="2020-12-01">

@@ -165,7 +165,6 @@
         Brevo Tools
     </div>
 
-
     <div class="sub-tools-dropdown" id="sub-brevo">
         <?php if (isset($_SESSION['brevo_mcp_tools']['tools'])): ?>
             <?php foreach ($_SESSION['brevo_mcp_tools']['tools'] as $tool): ?>
@@ -192,6 +191,19 @@
 </div>
 
 <script>
+    const energyTools = <?= json_encode($_SESSION['energy_mcp_tools']['tools'] ?? []) ?>;
+    const brevoTools = <?= json_encode($_SESSION['brevo_mcp_tools']['tools'] ?? []) ?>;
+    const xmlTools = <?= json_encode($_SESSION['xml_mcp_tools']['tools'] ?? []) ?>;
+
+    // Tool lookup function
+    function getToolByCategoryAndTitle(category, title) {
+        let tools = [];
+        if (category === 'Energy') tools = energyTools;
+        else if (category === 'Brevo') tools = brevoTools;
+        else if (category === 'XML') tools = xmlTools;
+        return tools.find(tool => tool.title === title);
+    }
+
     function toggleToolsDropdown() {
         const dropdown = document.getElementById('toolsDropdown');
         const icon = document.querySelector('.attachment');
@@ -215,14 +227,115 @@
         subDropdown.classList.toggle('active');
     }
 
-    function selectSubTool(category, toolName) {
-        // Handle selection (e.g., alert or integrate with chat)
-        alert('Selected: ' + category + ' - ' + toolName); // Placeholder - replace with actual logic
-        // Close all dropdowns
+    function selectSubTool(category, toolTitle) {
+        const tool = getToolByCategoryAndTitle(category, toolTitle);
+        if (!tool || !tool.inputSchema?.properties) {
+            alert('Tool schema not found');
+            return;
+        }
+
+        // Generate inputs HTML (one per line, with form-row/form-group structure)
+        let inputsHtml = '<div class="tab-content tab-padding-remove"><div class="tab-pane fade show active" id="tool-tab-1">';
+        const properties = tool.inputSchema.properties;
+        Object.keys(properties).forEach(prop => {
+            const propDef = properties[prop];
+            const isRequired = tool.inputSchema.required?.includes(prop) || false;
+            const defaultVal = propDef.default ?? '';
+            let inputHtml = '';
+
+            if (propDef.enum) {
+                inputHtml = `<select class="form-input" id="input-${prop}" name="${prop}">`;
+                (propDef.enum || []).forEach(option => {
+                    inputHtml += `<option value="${option}" ${defaultVal === option ? 'selected' : ''}>${option}</option>`;
+                });
+                inputHtml += '</select>';
+            } else if (propDef.type === 'number') {
+                inputHtml = `<input type="number" class="form-input" id="input-${prop}" name="${prop}" value="${defaultVal}" step="any" min="${propDef.minimum ?? ''}" max="${propDef.maximum ?? ''}">`;
+            } else if (propDef.type === 'string') {
+                inputHtml = `<input type="text" class="form-input" id="input-${prop}" name="${prop}" value="${defaultVal}" ${propDef.format === 'email' ? 'type="email"' : ''}>`;
+            } else if (propDef.type === 'boolean') {
+                inputHtml = `<input type="checkbox" class="form-input" id="input-${prop}" name="${prop}">`;
+                if (defaultVal) inputHtml += ' checked';
+            } else if (propDef.type === 'array') {
+                inputHtml = `<input type="text" class="form-input" id="input-${prop}" name="${prop}" value="${defaultVal}" placeholder="Comma-separated values">`;
+            } else if (propDef.type === 'object') {
+                inputHtml = `<textarea class="form-input" id="input-${prop}" name="${prop}" rows="3" placeholder="JSON object">${JSON.stringify(defaultVal, null, 2)}</textarea>`;
+            } else {
+                inputHtml = `<input type="text" class="form-input" id="input-${prop}" name="${prop}" value="${defaultVal}">`;
+            }
+
+            inputsHtml += `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">${prop}${isRequired ? ' *' : ''}</label>
+                        ${inputHtml}
+                    </div>
+                </div>
+            `;
+        });
+        inputsHtml += '</div></div>'; // Close tab-pane and tab-content
+
+        // Always recreate full modal HTML to avoid null errors on re-open
+        const modalHtml = `
+            <div class="modal fade" id="toolModal" tabindex="-1" aria-labelledby="toolModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="toolModalLabel">${toolTitle}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="toolModalBody">
+                            ${inputsHtml}
+                            <div class="mt-3 d-flex justify-content-between">
+                                <button type="button" class="btn btn-cancel w-50" data-bs-dismiss="modal">With Chat</button>
+                                <button type="button" class="btn btn-apply w-50" onclick="submitTool('${tool.name}', 'without-chat')">Without Chat</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if present
+        const existingModal = document.getElementById('toolModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Append new modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Show modal (Bootstrap 5)
+        const modalEl = document.getElementById('toolModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Close dropdowns
         document.getElementById('toolsDropdown').classList.remove('active');
         document.querySelector('.attachment').classList.remove('active');
         document.querySelectorAll('.tools-item.has-sub').forEach(item => item.classList.remove('active'));
         document.querySelectorAll('.sub-tools-dropdown').forEach(sub => sub.classList.remove('active'));
+    }
+
+    function submitTool(toolName, mode) {
+        const formData = {};
+        const inputs = document.querySelectorAll('#toolModalBody [name]');
+        inputs.forEach(el => {
+            if (el.type === 'checkbox') {
+                formData[el.name] = el.checked;
+            } else {
+                formData[el.name] = el.value;
+            }
+        });
+        console.log('Submitting tool:', toolName, 'Data:', formData, 'Mode:', mode);
+        // TODO: Integrate with your API call here
+
+        // Close modal
+        const modalEl = document.getElementById('toolModal');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }
     }
 
     // Close dropdown on outside click
@@ -232,7 +345,6 @@
         if (!icon.contains(event.target) && !dropdown.contains(event.target)) {
             dropdown.classList.remove('active');
             icon.classList.remove('active');
-            // Also close subs
             document.querySelectorAll('.tools-item.has-sub').forEach(item => item.classList.remove('active'));
             document.querySelectorAll('.sub-tools-dropdown').forEach(sub => sub.classList.remove('active'));
         }
