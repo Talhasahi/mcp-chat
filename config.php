@@ -171,6 +171,48 @@ function get_user_preferences()
     return $data;
 }
 
+function get_mcp_servers()
+{
+    global $api_base_url;
+    $token = $_SESSION['token'] ?? '';
+
+    if (!$token) {
+        return ['error' => 'No authentication token – please log in again.'];
+    }
+
+    $url = rtrim($api_base_url, '/') . '/mcp/servers';
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token,
+        ],
+        CURLOPT_TIMEOUT => 10,
+    ]);
+
+    $raw = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // Basic connection problem
+    if ($raw === false) {
+        return ['error' => 'Failed to contact the API.'];
+    }
+
+    $data = json_decode($raw, true);
+
+    // If JSON failed or API returned a non-200 with an error field
+    if (!is_array($data) || $code !== 200) {
+        $msg = $data['error'] ?? 'Unknown API error';
+        return ['error' => $msg];
+    }
+
+    // Success – return the whole payload (array of servers)
+    return $data;
+}
+
 // Simple PUT /settings/preferences
 function put_user_preferences($data)
 {

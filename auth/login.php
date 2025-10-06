@@ -129,6 +129,10 @@ try {
     if (!isset($prefs['error'])) {
         $_SESSION['enabledProviders'] = $prefs['userPrefs']['enabledProviders'] ?? [];
     }
+    $servers = get_mcp_servers();
+    if (!isset($servers['error'])) {
+        $_SESSION['mcp_servers'] = $servers;
+    }
 
     echo json_encode(['token' => $token]); // Return same as Node.js
 } catch (Exception $e) {
