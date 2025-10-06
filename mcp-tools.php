@@ -204,6 +204,82 @@
         return tools.find(tool => tool.title === title);
     }
 
+    // Recursive function to generate inputs for nested schemas
+    function generateInputs(schema, basePath = '', rowCounter = 0) {
+        let html = '';
+        if (schema.type === 'object' && schema.properties) {
+            Object.keys(schema.properties).forEach(prop => {
+                const propDef = schema.properties[prop];
+                const fullPath = basePath ? `${basePath}.${prop}` : prop;
+                const label = capitalizeLabel(fullPath.replace(/\./g, ' ')); // e.g., "Sender Email"
+                const isRequired = schema.required?.includes(prop) || false;
+                const defaultVal = propDef.default ?? '';
+                let inputHtml = '';
+
+                if (propDef.enum) {
+                    inputHtml = `<select class="form-input" id="input-${fullPath}" name="${fullPath}">`;
+                    (propDef.enum || []).forEach(option => {
+                        inputHtml += `<option value="${option}" ${defaultVal === option ? 'selected' : ''}>${option}</option>`;
+                    });
+                    inputHtml += '</select>';
+                } else if (propDef.type === 'number') {
+                    inputHtml = `<input type="number" class="form-input" id="input-${fullPath}" name="${fullPath}" value="${defaultVal}" step="any" min="${propDef.minimum ?? ''}" max="${propDef.maximum ?? ''}">`;
+                } else if (propDef.type === 'string') {
+                    inputHtml = `<input type="text" class="form-input" id="input-${fullPath}" name="${fullPath}" value="${defaultVal}" ${propDef.format === 'email' ? 'type="email"' : ''}>`;
+                } else if (propDef.type === 'boolean') {
+                    inputHtml = `<select class="form-input" id="input-${fullPath}" name="${fullPath}">
+                        <option value="false" ${defaultVal === false || defaultVal === 'false' ? 'selected' : ''}>False</option>
+                        <option value="true" ${defaultVal === true || defaultVal === 'true' ? 'selected' : ''}>True</option>
+                    </select>`;
+                } else if (propDef.type === 'array') {
+                    if (propDef.items && propDef.items.type === 'string') {
+                        // Array of strings: simple input for comma-separated
+                        inputHtml = `<input type="text" class="form-input" id="input-${fullPath}" name="${fullPath}" value="${defaultVal}" placeholder="Comma-separated values">`;
+                    } else if (propDef.items && propDef.items.type === 'object' && propDef.items.properties) {
+                        // Array of objects: recurse into items.properties to generate sub-inputs
+                        const subHtml = generateInputs({
+                            type: 'object',
+                            properties: propDef.items.properties,
+                            required: propDef.items.required || []
+                        }, fullPath, rowCounter);
+                        html += subHtml;
+                        rowCounter += Object.keys(propDef.items.properties || {}).length; // Update counter
+                        return; // Skip adding to current row
+                    } else {
+                        inputHtml = `<textarea class="form-input" id="input-${fullPath}" name="${fullPath}" rows="2" placeholder="JSON array">${JSON.stringify(defaultVal, null, 2)}</textarea>`;
+                    }
+                } else if (propDef.type === 'object') {
+                    // Recurse for nested objects
+                    const subHtml = generateInputs(propDef, fullPath, rowCounter);
+                    html += subHtml;
+                    rowCounter += Object.keys(propDef.properties || {}).length; // Update counter for sub-properties
+                    return; // Skip adding to current row
+                } else {
+                    inputHtml = `<input type="text" class="form-input" id="input-${fullPath}" name="${fullPath}" value="${defaultVal}">`;
+                }
+
+                if (propDef.type !== 'object' && propDef.type !== 'array') {
+                    // Add non-nested/non-array inputs
+                    html += `
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">${label}${isRequired ? ' *' : ''}</label>
+                                ${inputHtml}
+                            </div>
+                        </div>
+                    `;
+                    rowCounter++;
+                }
+            });
+        }
+        return html;
+    }
+
+    // Capitalize label words
+    function capitalizeLabel(str) {
+        return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    }
+
     function toggleToolsDropdown() {
         const dropdown = document.getElementById('toolsDropdown');
         const icon = document.querySelector('.attachment');
@@ -234,45 +310,10 @@
             return;
         }
 
-        // Generate inputs HTML (one per line, with form-row/form-group structure)
+        // Generate inputs HTML with one per line using form-row
         let inputsHtml = '<div class="tab-content tab-padding-remove"><div class="tab-pane fade show active" id="tool-tab-1">';
-        const properties = tool.inputSchema.properties;
-        Object.keys(properties).forEach(prop => {
-            const propDef = properties[prop];
-            const isRequired = tool.inputSchema.required?.includes(prop) || false;
-            const defaultVal = propDef.default ?? '';
-            let inputHtml = '';
-
-            if (propDef.enum) {
-                inputHtml = `<select class="form-input" id="input-${prop}" name="${prop}">`;
-                (propDef.enum || []).forEach(option => {
-                    inputHtml += `<option value="${option}" ${defaultVal === option ? 'selected' : ''}>${option}</option>`;
-                });
-                inputHtml += '</select>';
-            } else if (propDef.type === 'number') {
-                inputHtml = `<input type="number" class="form-input" id="input-${prop}" name="${prop}" value="${defaultVal}" step="any" min="${propDef.minimum ?? ''}" max="${propDef.maximum ?? ''}">`;
-            } else if (propDef.type === 'string') {
-                inputHtml = `<input type="text" class="form-input" id="input-${prop}" name="${prop}" value="${defaultVal}" ${propDef.format === 'email' ? 'type="email"' : ''}>`;
-            } else if (propDef.type === 'boolean') {
-                inputHtml = `<input type="checkbox" class="form-input" id="input-${prop}" name="${prop}">`;
-                if (defaultVal) inputHtml += ' checked';
-            } else if (propDef.type === 'array') {
-                inputHtml = `<input type="text" class="form-input" id="input-${prop}" name="${prop}" value="${defaultVal}" placeholder="Comma-separated values">`;
-            } else if (propDef.type === 'object') {
-                inputHtml = `<textarea class="form-input" id="input-${prop}" name="${prop}" rows="3" placeholder="JSON object">${JSON.stringify(defaultVal, null, 2)}</textarea>`;
-            } else {
-                inputHtml = `<input type="text" class="form-input" id="input-${prop}" name="${prop}" value="${defaultVal}">`;
-            }
-
-            inputsHtml += `
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">${prop}${isRequired ? ' *' : ''}</label>
-                        ${inputHtml}
-                    </div>
-                </div>
-            `;
-        });
+        let rowCounter = 0;
+        inputsHtml += generateInputs(tool.inputSchema, '', rowCounter);
         inputsHtml += '</div></div>'; // Close tab-pane and tab-content
 
         // Always recreate full modal HTML to avoid null errors on re-open
@@ -287,7 +328,7 @@
                         <div class="modal-body" id="toolModalBody">
                             ${inputsHtml}
                             <div class="mt-3 d-flex justify-content-between">
-                                <button type="button" class="btn btn-cancel w-50" data-bs-dismiss="modal">With Chat</button>
+                                <button type="button" class="btn btn-cancel w-50" onclick="submitTool('${tool.name}', 'with-chat')">With Chat</button>
                                 <button type="button" class="btn btn-apply w-50" onclick="submitTool('${tool.name}', 'without-chat')">Without Chat</button>
                             </div>
                         </div>
