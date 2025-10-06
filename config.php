@@ -201,6 +201,7 @@ function put_user_preferences($data)
 }
 
 // Helper for authenticated API calls
+// Helper for authenticated API calls
 function call_authenticated_api($endpoint, $data, $method = 'POST')
 {
     global $api_base_url;
@@ -217,6 +218,16 @@ function call_authenticated_api($endpoint, $data, $method = 'POST')
     ];
     if ($method === 'POST') {
         $opts[CURLOPT_POST] = true;
+        $opts[CURLOPT_POSTFIELDS] = json_encode($data);
+    } elseif ($method === 'GET') {
+        // For GET, add query params if $data is array (but here $data=null, so no change)
+        if (is_array($data) && !empty($data)) {
+            $query = http_build_query($data);
+            $url .= '?' . $query;
+            curl_setopt($ch, CURLOPT_URL, $url);
+        }
+    } elseif ($method === 'PATCH') {
+        $opts[CURLOPT_CUSTOMREQUEST] = 'PATCH';
         $opts[CURLOPT_POSTFIELDS] = json_encode($data);
     }
     curl_setopt_array($ch, $opts);

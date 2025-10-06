@@ -79,10 +79,14 @@ $has_prompts = !empty($prompts);
                         </div>
                     </div>
                     <button class="action-btn" onclick="window.location.href='prompt_library_detail.php?id=<?php echo urlencode($promptId); ?>'">View Prompt</button>
-                    <div class="icons">
+                    <div class="icons pointer">
                         <i class="fas fa-link icon"></i>
                         <i class="fas fa-share-alt icon"></i>
-                        <i class="fas fa-ellipsis-h icon"></i>
+                        <i class="fas fa-edit edit-icon"
+                            onclick="window.location.href='edit_prompt.php?id=<?php echo urlencode($promptId); ?>'"
+                            title="Edit"></i>
+
+
                     </div>
                 </div>
             <?php endforeach; ?>
