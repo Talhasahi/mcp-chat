@@ -4,100 +4,95 @@ include 'includes/header.php';
 include 'includes/sidebar.php';
 
 $page_icon = "fas fa-layer-group";
+
+start_session();
+require_login(); // Ensure logged in
+
+$api_base_url = $GLOBALS['api_base_url'] ?? ''; // From config.php
+$token = $_SESSION['token'] ?? '';
+
+$search = trim($_POST['search'] ?? $_GET['search'] ?? ''); // Handle POST or GET for simplicity
+
+// Function to fetch prompts (reuse call_authenticated_api for GET)
+function fetch_prompts($api_base_url, $token, $search = '')
+{
+    $endpoint = '/prompts';
+    if ($search) {
+        $endpoint .= '?search=' . urlencode($search);
+    }
+
+    $result = call_authenticated_api($endpoint, null, 'GET');
+    $response = $result['response'];
+    $http_code = $result['code'];
+
+    if (!$response || $http_code !== 200) {
+        // On error, set empty array (handle in UI)
+        return [];
+    }
+
+    $prompts = json_decode($response, true);
+    return is_array($prompts) ? $prompts : [];
+}
+
+$prompts = fetch_prompts($api_base_url, $token, $search);
+$has_prompts = !empty($prompts);
 ?>
+
 <div class="main-content">
-
-
-
     <?php include 'includes/common-header.php'; ?>
 
-    <div class="search-container">
-        <input type="text" placeholder="Search for a prompt..." class="search-input">
-        <i class="fas fa-filter filter-icon"></i>
-    </div>
+    <form method="POST" action="prompt_library.php" style="display: inline;">
+        <div class="search-container">
+            <input type="text" name="search" placeholder="Search for a prompt..." class="search-input" value="<?php echo htmlspecialchars($search); ?>" <?php echo $search ? 'autofocus' : ''; ?>>
+            <button type="submit" style="border: none; background: none; cursor: pointer;">
+                <i class="fas fa-search" style="color: #007bff;"></i>
+            </button>
+            <i class="fas fa-filter filter-icon"></i>
+        </div>
+    </form>
+
     <div class="left-right">
-        <p class="section-title">All Prompts</p>
+        <p class="section-title">All Prompts<?php echo $search ? ' for "' . htmlspecialchars($search) . '"' : ''; ?></p>
         <button class="btn btn-blackone" onclick="window.location.href='create_prompt.php'">&nbsp;Create Prompt&nbsp;
             <i class="fas fa-plus"></i>&nbsp;
         </button>
     </div>
 
-    <div class="prompt-grid">
-        <div class="card">
-            <p class="category">SEO</p>
-            <h3>SEO Content Roadmap</h3>
-            <p class="description">Purpose Transform your content strategy into a data-driven SEO engine that systematically captures organic traffic, builds topical authority, and conv sdhdhsdhsdhsjhsjhhs
-                sjhsdjsdhsdjhsdjhsdjh.. what aboy ny abc h aajjas ajs asjasjas asjashashasa ajhasjhas .</p>
-            <div class="author">
-                <img src="assets/images/author-avatar.png" alt="Jane Cooper" class="author-img">
-                <div>
-                    <p class="author-name">Jane Cooper</p>
-                    <p class="author-role">Author</p>
+    <?php if ($has_prompts): ?>
+        <div class="prompt-grid">
+            <?php foreach ($prompts as $prompt): ?>
+                <?php
+                $category = $prompt['categoryId'] ? $prompt['categoryId'] : 'SEO';
+                $truncatedBody = strlen($prompt['body']) > 150 ? substr($prompt['body'], 0, 150) . '...' : $prompt['body'];
+                $authorName = $prompt['authorId']; // Use authorId as name
+                $promptId = $prompt['id'];
+                ?>
+                <div class="card">
+                    <p class="category"><?php echo htmlspecialchars($category); ?></p>
+                    <h3><?php echo htmlspecialchars($prompt['title']); ?></h3>
+                    <p class="description"><?php echo htmlspecialchars($truncatedBody); ?></p>
+                    <div class="author">
+                        <img src="assets/images/author-avatar.png" alt="<?php echo htmlspecialchars($authorName); ?>" class="author-img">
+                        <div>
+                            <p class="author-name"><?php echo htmlspecialchars($authorName); ?></p>
+                            <p class="author-role">Author</p>
+                        </div>
+                    </div>
+                    <button class="action-btn" onclick="window.location.href='prompt_library_detail.php?id=<?php echo urlencode($promptId); ?>'">View Prompt</button>
+                    <div class="icons">
+                        <i class="fas fa-link icon"></i>
+                        <i class="fas fa-share-alt icon"></i>
+                        <i class="fas fa-ellipsis-h icon"></i>
+                    </div>
                 </div>
-            </div>
-            <button class="action-btn" onclick="window.location.href='prompt_library_detail.php'">View Prompt</button>
-            <div class="icons">
-                <i class="fas fa-link icon"></i>
-                <i class="fas fa-share-alt icon"></i>
-                <i class="fas fa-ellipsis-h icon"></i>
-            </div>
+            <?php endforeach; ?>
         </div>
-        <!-- Additional prompt cards to make it 4 in a row -->
-        <div class="card">
-            <p class="category">Marketing</p>
-            <h3>Social Media Strategy</h3>
-            <p class="description">Create a comprehensive plan to boost your brand's presence on social media platforms.</p>
-            <div class="author">
-                <img src="assets/images/author-avatar.png" alt="John Doe" class="author-img">
-                <div>
-                    <p class="author-name">John Doe</p>
-                    <p class="author-role">Author</p>
-                </div>
-            </div>
-            <button class="action-btn" onclick="window.location.href='prompt_library_detail.php'">View Prompt</button>
-            <div class="icons">
-                <i class="fas fa-link icon"></i>
-                <i class="fas fa-share-alt icon"></i>
-                <i class="fas fa-ellipsis-h icon"></i>
-            </div>
+    <?php else: ?>
+        <div id="no-results" style="text-align: center; padding: 2rem; color: #6c757d;">
+            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+            <p><?php echo $search ? 'No prompts found for "' . htmlspecialchars($search) . '".' : 'No prompts available yet.'; ?></p>
         </div>
-        <div class="card">
-            <p class="category">Business</p>
-            <h3>Business Plan Outline</h3>
-            <p class="description">Develop a detailed business plan to guide your startup's growth and success.</p>
-            <div class="author">
-                <img src="assets/images/author-avatar.png" alt="Jane Smith" class="author-img">
-                <div>
-                    <p class="author-name">Jane Smith</p>
-                    <p class="author-role">Author</p>
-                </div>
-            </div>
-            <button class="action-btn" onclick="window.location.href='prompt_library_detail.php'">View Prompt</button>
-            <div class="icons">
-                <i class="fas fa-link icon"></i>
-                <i class="fas fa-share-alt icon"></i>
-                <i class="fas fa-ellipsis-h icon"></i>
-            </div>
-        </div>
-        <div class="card">
-            <p class="category">Coding</p>
-            <h3>Code Review Checklist</h3>
-            <p class="description">Ensure code quality with this step-by-step review checklist for developers.</p>
-            <div class="author">
-                <img src="assets/images/author-avatar.png" alt="Mike Johnson" class="author-img">
-                <div>
-                    <p class="author-name">Mike Johnson</p>
-                    <p class="author-role">Author</p>
-                </div>
-            </div>
-            <button class="action-btn" onclick="window.location.href='prompt_library_detail.php'">View Prompt</button>
-            <div class="icons">
-                <i class="fas fa-link icon"></i>
-                <i class="fas fa-share-alt icon"></i>
-                <i class="fas fa-ellipsis-h icon"></i>
-            </div>
-        </div>
-    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Filter Modal -->
