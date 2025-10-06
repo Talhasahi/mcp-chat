@@ -2,7 +2,6 @@
 $page_title = "MCP Chat - AI Desk";
 include 'includes/header.php';
 include 'includes/sidebar.php';
-
 $page_icon = "fas fa-home";
 ?>
 <div class="main-content" style="padding: 0 20px 120px 20px;">
@@ -43,7 +42,7 @@ $page_icon = "fas fa-home";
     <div class="suggested-prompt"><i class="fas fa-lightbulb"></i>Write a LinkedIn post announcing a product launch</div>
 </div>
 <div class="chat-input mb-2">
-    <i class="fas fa-paperclip attachment"></i>
+    <?php include 'mcp-tools.php'; ?>
     <input type="text" placeholder="Message to Ai Chat...">
     <i class="far fa-smile emoji"></i>
     <i class="fas fa-microphone mic"></i>

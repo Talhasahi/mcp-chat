@@ -133,6 +133,86 @@ try {
     if (!isset($servers['error'])) {
         $_SESSION['mcp_servers'] = $servers;
     }
+    $xml_server_id = null;
+    $brevo_server_id = null;
+    $energy_server_id = null;
+
+    foreach ($servers as $server) {
+        if ($server['name'] === 'xml-mcp') {
+            $xml_server_id = $server['id'];
+        } elseif ($server['name'] === 'brevo-mcp') {
+            $brevo_server_id = $server['id'];
+        } elseif ($server['name'] === 'energy-mcp') {
+            $energy_server_id = $server['id'];
+        }
+    }
+
+    // Store extracted IDs in session
+    $_SESSION['xml_server_id'] = $xml_server_id;
+    $_SESSION['brevo_server_id'] = $brevo_server_id;
+    $_SESSION['energy_server_id'] = $energy_server_id;
+
+    // After extracting and storing the server IDs in the if (!isset($servers['error'])) block, add this:
+
+    if ($xml_server_id) {
+        $xml_url = rtrim($api_base_url, '/') . '/mcp/servers/' . $xml_server_id . '/tools';
+        $ch = curl_init($xml_url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $token,
+            ],
+            CURLOPT_TIMEOUT => 10,
+        ]);
+        $xml_raw = curl_exec($ch);
+        $xml_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        $xml_mcp_tools = json_decode($xml_raw, true);
+        if (is_array($xml_mcp_tools) && $xml_code === 200) {
+            $_SESSION['xml_mcp_tools'] = $xml_mcp_tools;
+        }
+    }
+
+    if ($brevo_server_id) {
+        $brevo_url = rtrim($api_base_url, '/') . '/mcp/servers/' . $brevo_server_id . '/tools';
+        $ch = curl_init($brevo_url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $token,
+            ],
+            CURLOPT_TIMEOUT => 10,
+        ]);
+        $brevo_raw = curl_exec($ch);
+        $brevo_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        $brevo_mcp_tools = json_decode($brevo_raw, true);
+        if (is_array($brevo_mcp_tools) && $brevo_code === 200) {
+            $_SESSION['brevo_mcp_tools'] = $brevo_mcp_tools;
+        }
+    }
+
+    if ($energy_server_id) {
+        $energy_url = rtrim($api_base_url, '/') . '/mcp/servers/' . $energy_server_id . '/tools';
+        $ch = curl_init($energy_url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $token,
+            ],
+            CURLOPT_TIMEOUT => 10,
+        ]);
+        $energy_raw = curl_exec($ch);
+        $energy_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        $energy_mcp_tools = json_decode($energy_raw, true);
+        if (is_array($energy_mcp_tools) && $energy_code === 200) {
+            $_SESSION['energy_mcp_tools'] = $energy_mcp_tools;
+        }
+    }
 
     echo json_encode(['token' => $token]); // Return same as Node.js
 } catch (Exception $e) {
