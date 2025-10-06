@@ -6,11 +6,23 @@
     }
 
     function handleLogout() {
-        if (confirm('Are you sure you want to log out?')) {
-            window.location.href = 'logout.php'; // Redirect to server-side logout
-        }
         // Close dropdown
         document.getElementById('logoutDropdown').classList.remove('active');
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You will be logged out.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, log out!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'logout.php'; // Redirect to server-side logout
+            }
+        });
     }
 
     // Close dropdown if clicking outside
