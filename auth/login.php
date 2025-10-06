@@ -123,7 +123,12 @@ try {
     $_SESSION['hotel_id'] = $me_result['hotelId'];
     $_SESSION['hotel_name'] = $me_result['hotel']['name'];
     $_SESSION['hotel_is_active'] = $me_result['hotel']['isActive'];
-    $_SESSION['token'] = $token; // Store for future API calls
+    $_SESSION['token'] = $token;
+
+    $prefs = get_user_preferences();
+    if (!isset($prefs['error'])) {
+        $_SESSION['enabledProviders'] = $prefs['userPrefs']['enabledProviders'] ?? [];
+    }
 
     echo json_encode(['token' => $token]); // Return same as Node.js
 } catch (Exception $e) {
