@@ -113,7 +113,8 @@ $has_prompts = !empty($prompts);
             <div class="modal-header">
                 <h5 class="modal-title" id="filterModalLabel">Filter</h5>
             </div>
-            <div class="modal-body">
+
+            <div class="modal-body tab-content">
                 <div class="mt-0">
                     <h6>Categories</h6>
                     <div class="category-grid">
@@ -155,6 +156,7 @@ $has_prompts = !empty($prompts);
                         </div>
                     </div>
                 </div>
+
                 <div class="mt-1">
                     <h6>Date Created</h6>
                     <input type="date" class="date-input search-input" value="2020-12-01">
