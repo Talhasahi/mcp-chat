@@ -54,58 +54,52 @@ $categories = fetch_categories();
     </form>
 
     <div class="left-right">
-        <p class="section-title">All Prompts<?php echo $search ? ' for "' . htmlspecialchars($search) . '"' : ''; ?></p>
+        <p class="section-title" id="sectionTitle">All Prompts<?php echo $search ? ' for "' . htmlspecialchars($search) . '"' : ''; ?></p>
         <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'author'): ?>
             <button class="btn btn-blackone" onclick="window.location.href='create_prompt.php'">
                 &nbsp;Create Prompt&nbsp;
                 <i class="fas fa-plus"></i>&nbsp;
             </button>
         <?php endif; ?>
-
     </div>
 
-    <?php if ($has_prompts): ?>
-        <div class="prompt-grid">
-            <?php foreach ($prompts as $prompt): ?>
-                <?php
-                $category = $prompt['category']['name'] ?? 'SEO';
-                $truncatedBody = strlen($prompt['body']) > 150 ? substr($prompt['body'], 0, 150) . '...' : $prompt['body'];
-                $authorName = $prompt['author']['email']; // Use authorId as name
-                $promptId = $prompt['id'];
-                ?>
-                <div class="card">
-                    <p class="category"><?php echo htmlspecialchars($category); ?></p>
-                    <h3><?php echo htmlspecialchars($prompt['title']); ?></h3>
-                    <p class="description"><?php echo htmlspecialchars($truncatedBody); ?></p>
-                    <div class="author">
-                        <img src="assets/images/author-avatar.png" alt="<?php echo htmlspecialchars($authorName); ?>" class="author-img">
-                        <div>
-                            <p class="author-name"><?php echo htmlspecialchars($authorName); ?></p>
-                            <p class="author-role">Author</p>
-                        </div>
-                    </div>
-                    <button class="action-btn" onclick="window.location.href='prompt_library_detail.php?id=<?php echo urlencode($promptId); ?>'">View Prompt</button>
-                    <div class="icons pointer">
-                        <i class="fas fa-link icon"></i>
-                        <i class="fas fa-share-alt icon"></i>
-                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'author'): ?>
-                            <i class="fas fa-edit edit-icon pointer"
-                                onclick="window.location.href='edit_prompt.php?id=<?php echo urlencode($promptId); ?>'"
-                                title="Edit"></i>
-                        <?php endif; ?>
-
-
-
+    <div id="promptGrid" class="prompt-grid" style="<?php echo $has_prompts ? '' : 'display: none;'; ?>">
+        <?php foreach ($prompts as $prompt): ?>
+            <?php
+            $category = $prompt['category']['name'] ?? 'SEO';
+            $truncatedBody = strlen($prompt['body']) > 150 ? substr($prompt['body'], 0, 150) . '...' : $prompt['body'];
+            $authorName = $prompt['author']['email']; // Use authorId as name
+            $promptId = $prompt['id'];
+            ?>
+            <div class="card" data-category="<?php echo htmlspecialchars($category); ?>">
+                <p class="category"><?php echo htmlspecialchars($category); ?></p>
+                <h3><?php echo htmlspecialchars($prompt['title']); ?></h3>
+                <p class="description"><?php echo htmlspecialchars($truncatedBody); ?></p>
+                <div class="author">
+                    <img src="assets/images/author-avatar.png" alt="<?php echo htmlspecialchars($authorName); ?>" class="author-img">
+                    <div>
+                        <p class="author-name"><?php echo htmlspecialchars($authorName); ?></p>
+                        <p class="author-role">Author</p>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        </div>
-    <?php else: ?>
-        <div id="no-results" style="text-align: center; padding: 2rem; color: #6c757d;">
-            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-            <p><?php echo $search ? 'No prompts found for "' . htmlspecialchars($search) . '".' : 'No prompts available yet.'; ?></p>
-        </div>
-    <?php endif; ?>
+                <button class="action-btn" onclick="window.location.href='prompt_library_detail.php?id=<?php echo urlencode($promptId); ?>'">View Prompt</button>
+                <div class="icons pointer">
+                    <i class="fas fa-link icon"></i>
+                    <i class="fas fa-share-alt icon"></i>
+                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'author'): ?>
+                        <i class="fas fa-edit edit-icon pointer"
+                            onclick="window.location.href='edit_prompt.php?id=<?php echo urlencode($promptId); ?>'"
+                            title="Edit"></i>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <div id="no-results" style="text-align: center; padding: 2rem; color: #6c757d; <?php echo $has_prompts ? 'display:none;' : ''; ?>">
+        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+        <p id="noResultsText"><?php echo $search ? 'No prompts found for "' . htmlspecialchars($search) . '".' : 'No prompts available yet.'; ?></p>
+    </div>
 </div>
 
 <!-- Filter Modal -->
@@ -125,7 +119,7 @@ $categories = fetch_categories();
                                 <?php
                                 $name = $category['name'] ?? '';
                                 $id = 'category' . str_replace(' ', '', strtoupper($name)); // e.g., categorySEO
-                                $isChecked = ($index === 0) ? '' : ''; // Check first one by default
+                                $isChecked = '';
                                 ?>
                                 <div class="form-check">
                                     <input type="checkbox" class="form-check-input" id="<?php echo htmlspecialchars($id); ?>" <?php echo $isChecked; ?>>
@@ -163,6 +157,8 @@ $categories = fetch_categories();
 </div>
 
 <script>
+    var currentSearch = <?php echo json_encode($search); ?>;
+
     document.querySelector('.filter-icon').addEventListener('click', function() {
         new bootstrap.Modal(document.getElementById('filterModal')).show();
     });
@@ -171,5 +167,62 @@ $categories = fetch_categories();
         document.querySelectorAll('.type-tag').forEach(tag => tag.classList.remove('selected'));
         element.classList.add('selected');
     }
+
+    document.querySelector('.btn-apply').addEventListener('click', function() {
+        let selectedCategories = [];
+        document.querySelectorAll('#filterModal .form-check-input:checked').forEach(function(cb) {
+            let label = cb.nextElementSibling.textContent.trim();
+            selectedCategories.push(label);
+        });
+
+        // Update section title
+        let title = document.getElementById('sectionTitle');
+        let baseTitle = 'All Prompts';
+        if (currentSearch) {
+            baseTitle += ' for "' + currentSearch + '"';
+        }
+        if (selectedCategories.length > 0) {
+            baseTitle += ' filtered by: ' + selectedCategories.join(', ');
+        }
+        title.textContent = baseTitle;
+
+        // Filter cards
+        let cards = document.querySelectorAll('#promptGrid .card');
+        cards.forEach(function(card) {
+            let cardCategory = card.getAttribute('data-category');
+            if (selectedCategories.length === 0 || selectedCategories.includes(cardCategory)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Check visible count and update no-results
+        let visibleCount = 0;
+        cards.forEach(function(card) {
+            if (card.style.display !== 'none') {
+                visibleCount++;
+            }
+        });
+
+        let noResults = document.getElementById('no-results');
+        let noResultsText = document.getElementById('noResultsText');
+        if (visibleCount === 0) {
+            let message = 'No prompts available.';
+            if (currentSearch) {
+                message = 'No prompts found for "' + currentSearch + '".';
+            }
+            if (selectedCategories.length > 0) {
+                message = 'No prompts found for categories: ' + selectedCategories.join(', ') + '.';
+            }
+            noResultsText.textContent = message;
+            noResults.style.display = 'block';
+        } else {
+            noResults.style.display = 'none';
+        }
+
+        // Hide modal
+        bootstrap.Modal.getInstance(document.getElementById('filterModal')).hide();
+    });
 </script>
 <?php include 'includes/footer.php'; ?>

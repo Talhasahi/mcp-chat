@@ -12,7 +12,7 @@ include 'includes/sidebar.php';
         background-color: #FFFFFF;
         border-radius: 10px;
         padding: 2px;
-        height: calc(100vh - 100px);
+        height: calc(100vh - 85px);
         /* Adjust for header and margin */
         overflow-y: auto;
         /* Independent scroll for prompts */
@@ -55,7 +55,7 @@ include 'includes/sidebar.php';
     .chat-section {
         display: flex;
         flex-direction: column;
-        height: calc(100vh - 100px);
+        height: calc(100vh - 80px);
         /* Match prompt-list-container height */
         margin-bottom: 0;
         /* No bottom margin */
@@ -287,7 +287,7 @@ include 'includes/sidebar.php';
         }
 
         .chat-section {
-            height: calc(100vh - 60px);
+            height: calc(100vh - 80px);
             /* Adjust for reduced header margins */
             margin-bottom: 0;
         }
