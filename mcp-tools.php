@@ -1,8 +1,9 @@
 <?php
 // mcp-tools.php
 ?>
-<i class="fas fa-tools attachment" onclick="toggleToolsDropdown()"></i>
 
+
+<button class="tool-btn"><i class="fas fa-tools" onclick="toggleToolsDropdown()"></i></button>
 <style>
     .tools-dropdown {
         position: absolute;

@@ -287,6 +287,19 @@ body {
     cursor: pointer;
 }
 
+.chat-input .tool-btn {
+    background-color: #00B7E5;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
 /* ===== SEARCH AND FILTER STYLES ===== */
 .search-container {
     display: flex;
@@ -1173,6 +1186,11 @@ body {
         height: 36px;
     }
 
+    .chat-input .tool-btn {
+        width: 36px;
+        height: 36px;
+    }
+
     .search-container {
         flex-direction: column;
         align-items: stretch;
@@ -1240,5 +1258,242 @@ body {
 
     .main-header .logout-dropdown {
         right: 15px;
+    }
+}
+
+
+/* My Prompts Specific Styles */
+.prompt-list-container {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: calc(100vh - 100px);
+    /* Adjust for header and margin */
+    overflow-y: auto;
+    /* Independent scroll for prompts */
+}
+
+.prompt-list-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #E4E4E7;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.prompt-list-item:hover {
+    background-color: #F0F0F0;
+}
+
+.prompt-list-item img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.prompt-list-item p {
+    font-size: 14px;
+    color: #000000;
+    margin: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-section {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px);
+    /* Match prompt-list-container height */
+}
+
+.chat-container {
+    flex: 1;
+    overflow-y: auto;
+    /* Independent scroll for messages */
+    padding: 20px;
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-message {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.chat-message.user {
+    justify-content: flex-end;
+}
+
+.chat-message.ai {
+    justify-content: flex-start;
+}
+
+.chat-message img.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin: 0 10px;
+}
+
+.chat-message .message-content {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.chat-message.user .message-content {
+    background-color: #00B7E5;
+    color: #FFFFFF;
+    border: 1px solid #00B7E5;
+}
+
+.chat-message.ai .message-content {
+    background-color: #F0F0F0;
+    color: #000000;
+    border: 1px solid #E4E4E7;
+}
+
+.chat-message .message-content img {
+    max-width: 100%;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.chat-input-container {
+    background-color: #FFFFFF;
+    border-top: 1px solid #E4E4E7;
+    padding: 10px 20px;
+}
+
+/* Auto-expanding textarea - overrides to match existing input styles and prevent UI disturbance */
+.chat-input-container .chat-input {
+    align-items: flex-start !important;
+    /* Change from center to flex-start so expansion doesn't push button up */
+    gap: 10px;
+    /* Add gap for spacing between textarea and button */
+    padding: 0;
+    /* Ensure consistent padding */
+}
+
+.chat-textarea {
+    flex: 1;
+    /* Take remaining space */
+    border: none !important;
+    /* Match existing input */
+    outline: none !important;
+    font-size: 14px !important;
+    /* Match existing */
+    padding: 10px !important;
+    /* Match existing */
+    background-color: #F0F0F0 !important;
+    /* Match existing input bg */
+    border-radius: 25px !important;
+    /* Match existing */
+    resize: none;
+    /* Prevent manual resize */
+    overflow: hidden;
+    /* Hide scrollbars */
+    min-height: 40px;
+    /* Initial height to match button (40px) */
+    max-height: 120px;
+    /* Cap expansion to avoid too much growth */
+    line-height: 1.4;
+    /* Natural wrapping */
+    box-sizing: border-box;
+    /* Include padding in width calc */
+    margin-right: 0;
+    /* Remove any existing margin */
+}
+
+.chat-textarea:focus {
+    background-color: #F0F0F0;
+    /* Keep bg on focus, no outline change */
+}
+
+.chat-input-container .send-btn {
+    flex-shrink: 0;
+    /* Prevent button from shrinking */
+    align-self: flex-end;
+    /* Keep button aligned to bottom as textarea grows */
+    margin: 0;
+    /* Ensure no extra margins */
+}
+
+
+.chat-input-container .tool-btn {
+    flex-shrink: 0;
+    /* Prevent button from shrinking */
+    align-self: flex-end;
+    /* Keep button aligned to bottom as textarea grows */
+    margin: 0;
+    /* Ensure no extra margins */
+}
+
+/* Responsive tweaks to prevent overflow on small screens */
+@media (max-width: 768px) {
+    .col-3 {
+        display: none;
+        /* Hide prompt list in mobile view */
+    }
+
+    .col-9 {
+        width: 100%;
+        /* Full width for chat section */
+        max-width: 100%;
+    }
+
+    .main-content {
+        padding: 0 10px 10px 10px;
+        /* Reduced padding */
+    }
+
+    .main-header {
+        margin: 5px 0;
+        /* Reduced margin */
+    }
+
+    .chat-section {
+        height: calc(100vh - 60px);
+        /* Adjust for reduced header margins */
+    }
+
+    .chat-container {
+        padding: 10px;
+        /* Reduced padding */
+    }
+
+    .chat-message {
+        margin-bottom: 10px;
+        /* Reduced margin between messages */
+    }
+
+    .chat-message img.avatar {
+        display: none;
+        /* Hide avatars in mobile view */
+    }
+
+    .chat-message .message-content {
+        max-width: 90%;
+        /* Increase content width without avatars */
+    }
+
+    .chat-input-container {
+        padding: 5px 10px;
+        /* Reduced padding */
+    }
+
+    .chat-textarea {
+        font-size: 12px !important;
+        padding: 8px !important;
+        min-height: 36px;
+        /* Match smaller button on mobile */
     }
 }

@@ -7,175 +7,7 @@ include 'includes/sidebar.php';
 ?>
 
 <style>
-    /* My Prompts Specific Styles */
-    .prompt-list-container {
-        background-color: #FFFFFF;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        height: calc(100vh - 100px);
-        /* Adjust for header and margin */
-        overflow-y: auto;
-        /* Independent scroll for prompts */
-    }
 
-    .prompt-list-item {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        border-bottom: 1px solid #E4E4E7;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .prompt-list-item:hover {
-        background-color: #F0F0F0;
-    }
-
-    .prompt-list-item img {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        margin-right: 10px;
-    }
-
-    .prompt-list-item p {
-        font-size: 14px;
-        color: #000000;
-        margin: 0;
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .chat-section {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 100px);
-        /* Match prompt-list-container height */
-    }
-
-    .chat-container {
-        flex: 1;
-        overflow-y: auto;
-        /* Independent scroll for messages */
-        padding: 20px;
-        background-color: #FFFFFF;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .chat-message {
-        display: flex;
-        align-items: flex-start;
-        margin-bottom: 20px;
-    }
-
-    .chat-message.user {
-        justify-content: flex-end;
-    }
-
-    .chat-message.ai {
-        justify-content: flex-start;
-    }
-
-    .chat-message img.avatar {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        margin: 0 10px;
-    }
-
-    .chat-message .message-content {
-        max-width: 70%;
-        padding: 10px 15px;
-        border-radius: 10px;
-        font-size: 14px;
-    }
-
-    .chat-message.user .message-content {
-        background-color: #00B7E5;
-        color: #FFFFFF;
-        border: 1px solid #00B7E5;
-    }
-
-    .chat-message.ai .message-content {
-        background-color: #F0F0F0;
-        color: #000000;
-        border: 1px solid #E4E4E7;
-    }
-
-    .chat-message .message-content img {
-        max-width: 100%;
-        border-radius: 10px;
-        margin-top: 10px;
-    }
-
-    .chat-input-container {
-        background-color: #FFFFFF;
-        border-top: 1px solid #E4E4E7;
-        padding: 10px 20px;
-    }
-
-    /* Mobile View Adjustments */
-    @media (max-width: 768px) {
-        .col-3 {
-            display: none;
-            /* Hide prompt list in mobile view */
-        }
-
-        .col-9 {
-            width: 100%;
-            /* Full width for chat section */
-            max-width: 100%;
-        }
-
-        .main-content {
-            padding: 0 10px 10px 10px;
-            /* Reduced padding */
-        }
-
-        .main-header {
-            margin: 5px 0;
-            /* Reduced margin */
-        }
-
-        .chat-section {
-            height: calc(100vh - 60px);
-            /* Adjust for reduced header margins */
-        }
-
-        .chat-container {
-            padding: 10px;
-            /* Reduced padding */
-        }
-
-        .chat-message {
-            margin-bottom: 10px;
-            /* Reduced margin between messages */
-        }
-
-        .chat-message img.avatar {
-            display: none;
-            /* Hide avatars in mobile view */
-        }
-
-        .chat-message .message-content {
-            max-width: 90%;
-            /* Increase content width without avatars */
-        }
-
-        .chat-input-container {
-            padding: 5px 10px;
-            /* Reduced padding */
-        }
-
-        .chat-input {
-            margin-bottom: 5px;
-            /* Reduced margin */
-        }
-    }
 </style>
 
 <div class="main-content" style="padding: 0 20px 20px 20px;">
@@ -294,7 +126,7 @@ include 'includes/sidebar.php';
                 <div class="chat-input-container">
                     <div class="chat-input mb-2">
                         <?php include 'mcp-tools.php'; ?>
-                        <input type="text" placeholder="Message to AI Chat...">
+                        <textarea id="chatInput" class="chat-textarea" placeholder="Message to AI Chat..." rows="1"></textarea>
                         <!-- <i class="far fa-smile emoji"></i>
                         <i class="fas fa-microphone mic"></i> -->
                         <button class="send-btn"><i class="fas fa-paper-plane"></i></button>
@@ -304,5 +136,57 @@ include 'includes/sidebar.php';
         </div>
     </div>
 </div>
+
+<script>
+    // Auto-resize textarea on input (non-disruptive)
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatInput = document.getElementById('chatInput');
+
+        if (chatInput) {
+            // Initial height set
+            chatInput.style.height = 'auto';
+            chatInput.style.height = chatInput.scrollHeight + 'px';
+
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto'; // Reset
+                const newHeight = Math.min(this.scrollHeight, 120); // Cap at 120px
+                this.style.height = newHeight + 'px';
+            });
+
+            // Optional: Enter to send (without Shift for new line)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    document.querySelector('.send-btn').click();
+                }
+            });
+        }
+    });
+
+    // Handle send button click (placeholder - no API call, just clear and alert for now)
+    document.addEventListener('DOMContentLoaded', () => {
+        const sendBtn = document.querySelector('.send-btn');
+        const chatInput = document.getElementById('chatInput');
+
+        if (sendBtn && chatInput) {
+            sendBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Get input value
+                let inputText = chatInput.value.trim();
+                if (!inputText) {
+                    alert('Please enter a message!');
+                    return;
+                }
+
+                // Placeholder action: Clear input and reset height (add real logic later)
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                chatInput.style.height = chatInput.scrollHeight + 'px';
+                alert('Message sent! (No API call - implement as needed)');
+            });
+        }
+    });
+</script>
 
 <?php include 'includes/footer.php'; ?>

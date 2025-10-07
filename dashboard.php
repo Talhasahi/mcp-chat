@@ -4,6 +4,10 @@ include 'includes/header.php';
 include 'includes/sidebar.php';
 $page_icon = "fas fa-home";
 ?>
+<style>
+
+</style>
+
 <div class="main-content" style="padding: 0 20px 120px 20px;">
 
     <?php include 'includes/common-header.php'; ?>
@@ -45,13 +49,38 @@ $page_icon = "fas fa-home";
 </div>
 <div class="chat-input mb-2">
     <?php include 'mcp-tools.php'; ?>
-    <input type="text" id="chatInput" placeholder="Message to Ai Chat...">
+    <textarea id="chatInput" class="chat-textarea" placeholder="Message to Ai Chat..." rows="1"></textarea>
     <!-- <i class="far fa-smile emoji"></i>
     <i class="fas fa-microphone mic"></i> -->
     <button class="send-btn"><i class="fas fa-paper-plane"></i></button>
 </div>
 
 <script>
+    // Auto-resize textarea on input (non-disruptive)
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatInput = document.getElementById('chatInput');
+
+        if (chatInput) {
+            // Initial height set
+            chatInput.style.height = 'auto';
+            chatInput.style.height = chatInput.scrollHeight + 'px';
+
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto'; // Reset
+                const newHeight = Math.min(this.scrollHeight, 120); // Cap at 120px
+                this.style.height = newHeight + 'px';
+            });
+
+            // Optional: Enter to send (without Shift for new line)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    document.querySelector('.send-btn').click();
+                }
+            });
+        }
+    });
+
     // Handle send button click to create conversation and redirect
     document.addEventListener('DOMContentLoaded', () => {
         const sendBtn = document.querySelector('.send-btn');
@@ -93,8 +122,10 @@ $page_icon = "fas fa-home";
                     const result = await response.json();
 
                     if (response.ok && result.success) {
-                        // Clear input
+                        // Clear input and reset height
                         chatInput.value = '';
+                        chatInput.style.height = 'auto';
+                        chatInput.style.height = chatInput.scrollHeight + 'px';
                         // Redirect to my_prompt.php with id
                         window.location.href = `my_prompt.php?id=${result.id}`;
                     } else {
