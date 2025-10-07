@@ -295,8 +295,8 @@ include 'includes/sidebar.php';
                     <div class="chat-input mb-2">
                         <?php include 'mcp-tools.php'; ?>
                         <input type="text" placeholder="Message to AI Chat...">
-                        <i class="far fa-smile emoji"></i>
-                        <i class="fas fa-microphone mic"></i>
+                        <!-- <i class="far fa-smile emoji"></i>
+                        <i class="fas fa-microphone mic"></i> -->
                         <button class="send-btn"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
