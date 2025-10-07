@@ -305,3 +305,28 @@ function fetch_categories()
     $categories = json_decode($response, true);
     return is_array($categories) ? $categories : [];
 }
+// Refactored get_conversations using call_authenticated_api
+
+function get_conversations()
+{
+    global $api_base_url;
+
+    $token = $_SESSION['token'] ?? '';
+    if (!$token) {
+        return ['error' => 'No authentication token – please log in again.'];
+    }
+
+    $endpoint = '/conversations';
+    $result = call_authenticated_api($endpoint, null, 'GET');
+    $response = $result['response'];
+    $http_code = $result['code'];
+
+    if (!$response || $http_code !== 200) {
+        $data = json_decode($response, true);
+        $msg = $data['error'] ?? 'Unknown API error';
+        return ['error' => $msg];
+    }
+
+    $decoded = json_decode($response, true);
+    return is_array($decoded) ? $decoded : [];
+}
