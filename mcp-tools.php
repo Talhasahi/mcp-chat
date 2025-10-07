@@ -213,7 +213,7 @@
                 const fullPath = basePath ? `${basePath}.${prop}` : prop;
                 const label = capitalizeLabel(fullPath.replace(/\./g, ' ')); // e.g., "Sender Email"
                 const isRequired = schema.required?.includes(prop) || false;
-                const defaultVal = propDef.default ?? '';
+                let defaultVal = propDef.default ?? '';
                 let inputHtml = '';
 
                 if (propDef.enum) {
@@ -232,28 +232,64 @@
                         <option value="true" ${defaultVal === true || defaultVal === 'true' ? 'selected' : ''}>True</option>
                     </select>`;
                 } else if (propDef.type === 'array') {
-                    if (propDef.items && propDef.items.type === 'string') {
-                        // Array of strings: simple input for comma-separated
-                        inputHtml = `<input type="text" class="form-input" id="input-${fullPath}" name="${fullPath}" value="${defaultVal}" placeholder="Comma-separated values">`;
-                    } else if (propDef.items && propDef.items.type === 'object' && propDef.items.properties) {
-                        // Array of objects: recurse into items.properties to generate sub-inputs
+                    if (propDef.items && ['string', 'number', 'integer'].includes(propDef.items.type)) {
+                        // Array of primitives: comma-separated text input
+                        let placeholder = `Comma-separated ${propDef.items.type === 'integer' ? 'integers' : propDef.items.type}s, e.g., value1, value2`;
+                        let val = defaultVal;
+                        if (Array.isArray(defaultVal)) {
+                            val = defaultVal.join(', ');
+                        }
+                        inputHtml = `<input type="text" class="form-input" id="input-${fullPath}" name="${fullPath}" value="${val}" placeholder="${placeholder}">`;
+                        html += `
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">${label}${isRequired ? ` <span style="color: #dc3545;">*</span>` : ''}</label>
+                                    ${inputHtml}
+                                </div>
+                            </div>
+                        `;
+                        rowCounter++;
+                        return; // Skip further processing
+                    } else if (propDef.items && propDef.items.type === 'object' && propDef.items.properties && Object.keys(propDef.items.properties).length > 0) {
+                        // Array of objects: recurse into items.properties to generate sub-inputs (for one item) only if properties defined
                         const subHtml = generateInputs({
                             type: 'object',
                             properties: propDef.items.properties,
                             required: propDef.items.required || []
                         }, fullPath, rowCounter);
-                        html += subHtml;
-                        rowCounter += Object.keys(propDef.items.properties || {}).length; // Update counter
+                        if (subHtml) { // Only add if there's content
+                            html += subHtml;
+                            rowCounter += Object.keys(propDef.items.properties || {}).length; // Update counter
+                        }
                         return; // Skip adding to current row
                     } else {
-                        inputHtml = `<textarea class="form-input" id="input-${fullPath}" name="${fullPath}" rows="2" placeholder="JSON array">${JSON.stringify(defaultVal, null, 2)}</textarea>`;
+                        // Complex array: JSON textarea
+                        let val = JSON.stringify(defaultVal ?? [], null, 2);
+                        inputHtml = `<textarea class="form-input" id="input-${fullPath}" name="${fullPath}" rows="2" placeholder="JSON array">${val}</textarea>`;
+                        html += `
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">${label}${isRequired ? ` <span style="color: #dc3545;">*</span>` : ''}</label>
+                                    ${inputHtml}
+                                </div>
+                            </div>
+                        `;
+                        rowCounter++;
+                        return; // Skip further processing
                     }
                 } else if (propDef.type === 'object') {
-                    // Recurse for nested objects
-                    const subHtml = generateInputs(propDef, fullPath, rowCounter);
-                    html += subHtml;
-                    rowCounter += Object.keys(propDef.properties || {}).length; // Update counter for sub-properties
-                    return; // Skip adding to current row
+                    if (propDef.properties && Object.keys(propDef.properties).length > 0) {
+                        // Recurse for nested objects with defined properties
+                        const subHtml = generateInputs(propDef, fullPath, rowCounter);
+                        if (subHtml) { // Only add if there's content
+                            html += subHtml;
+                            rowCounter += Object.keys(propDef.properties || {}).length; // Update counter for sub-properties
+                        }
+                        return; // Skip adding to current row
+                    } else {
+                        // Skip free-form objects without defined properties
+                        return;
+                    }
                 } else {
                     inputHtml = `<input type="text" class="form-input" id="input-${fullPath}" name="${fullPath}" value="${defaultVal}">`;
                 }
@@ -263,7 +299,7 @@
                     html += `
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">${label}${isRequired ? ' *' : ''}</label>
+                                <label class="form-label">${label}${isRequired ? ` <span style="color: #dc3545;">*</span>` : ''}</label>
                                 ${inputHtml}
                             </div>
                         </div>
