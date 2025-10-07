@@ -4,6 +4,7 @@ include 'includes/header.php';
 include 'includes/sidebar.php';
 $page_icon = "fas fa-plus";
 require_author('dashboard.php');
+$categories = fetch_categories();
 ?>
 <style>
     /* Custom CSS for tags - add to assets/css/mcp.css or inline */
@@ -68,12 +69,13 @@ require_author('dashboard.php');
                     <label class="form-label">Category</label>
                     <select class="form-select" id="category" name="category" required>
                         <option value="">Select a category</option>
-                        <option value="design">Design</option>
-                        <option value="marketing">Marketing</option>
-                        <option value="coding">Coding</option>
-                        <option value="seo">SEO</option>
-
-
+                        <?php if (!empty($categories)): ?>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo htmlspecialchars($category['id'] ?? ''); ?>">
+                                    <?php echo htmlspecialchars($category['name'] ?? ''); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </select>
                 </div>
                 <div class="form-group">
@@ -181,6 +183,8 @@ require_author('dashboard.php');
 
             // Collect data (tags already in hidden)
             const formData = new FormData(form);
+
+            console.log(formData);
 
             try {
                 const response = await fetch('auth/prompts.php', {

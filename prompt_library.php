@@ -36,6 +36,8 @@ function fetch_prompts($api_base_url, $token, $search = '')
 
 $prompts = fetch_prompts($api_base_url, $token, $search);
 $has_prompts = !empty($prompts);
+
+$categories = fetch_categories();
 ?>
 
 <div class="main-content">
@@ -66,9 +68,9 @@ $has_prompts = !empty($prompts);
         <div class="prompt-grid">
             <?php foreach ($prompts as $prompt): ?>
                 <?php
-                $category = $prompt['categoryId'] ? $prompt['categoryId'] : 'SEO';
+                $category = $prompt['category']['name'] ?? 'SEO';
                 $truncatedBody = strlen($prompt['body']) > 150 ? substr($prompt['body'], 0, 150) . '...' : $prompt['body'];
-                $authorName = $prompt['authorId']; // Use authorId as name
+                $authorName = $prompt['author']['email']; // Use authorId as name
                 $promptId = $prompt['id'];
                 ?>
                 <div class="card">
@@ -114,52 +116,31 @@ $has_prompts = !empty($prompts);
                 <h5 class="modal-title" id="filterModalLabel">Filter</h5>
             </div>
 
-            <div class="modal-body tab-content">
+            <div class="modal-body tab-content tab-padding-remove">
                 <div class="mt-0">
                     <h6>Categories</h6>
                     <div class="category-grid">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryAssistant">
-                            <label class="form-check-label" for="categoryAssistant">Assistant</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryBusiness" checked>
-                            <label class="form-check-label" for="categoryBusiness">Business</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryCoding">
-                            <label class="form-check-label" for="categoryCoding">Coding</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryDesign">
-                            <label class="form-check-label" for="categoryDesign">Design</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryFinances">
-                            <label class="form-check-label" for="categoryFinances">Finances</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryMarketing">
-                            <label class="form-check-label" for="categoryMarketing">Marketing</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryCopywriting">
-                            <label class="form-check-label" for="categoryCopywriting">Copywriting</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryEducation">
-                            <label class="form-check-label" for="categoryEducation">Education</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="categoryHealth">
-                            <label class="form-check-label" for="categoryHealth">Health</label>
-                        </div>
+                        <?php if (!empty($categories)): ?>
+                            <?php foreach ($categories as $index => $category): ?>
+                                <?php
+                                $name = $category['name'] ?? '';
+                                $id = 'category' . str_replace(' ', '', strtoupper($name)); // e.g., categorySEO
+                                $isChecked = ($index === 0) ? '' : ''; // Check first one by default
+                                ?>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="<?php echo htmlspecialchars($id); ?>" <?php echo $isChecked; ?>>
+                                    <label class="form-check-label" for="<?php echo htmlspecialchars($id); ?>"><?php echo htmlspecialchars($name); ?></label>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-muted">No categories available.</p>
+                        <?php endif; ?>
                     </div>
                 </div>
-                <div class="form-row">
+                <!-- <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Username</label>
-                        <input type="text" class="form-input" value="<?php echo htmlspecialchars($_SESSION['user_id'] ?? 'N/A'); ?>">
+                        <input type="text" class="form-input" value="">
                     </div>
                 </div>
                 <div class="mt-1">
@@ -171,7 +152,7 @@ $has_prompts = !empty($prompts);
                     <div class="type-tag selected" onclick="selectType(this)" data-type="rarely">Rarely Used</div>
                     <div class="type-tag" onclick="selectType(this)" data-type="mostly">Mostly Used</div>
                     <div class="type-tag" onclick="selectType(this)" data-type="saved">Saved</div>
-                </div>
+                </div> -->
                 <div class="mt-3 d-flex justify-content-between">
                     <button type="button" class="btn btn-cancel w-50" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-apply w-50">Apply Filter</button>

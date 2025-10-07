@@ -288,3 +288,20 @@ function call_authenticated_api($endpoint, $data, $method = 'POST')
     curl_close($ch);
     return ['response' => $response, 'code' => $http_code];
 }
+
+function fetch_categories()
+{
+    $endpoint = '/prompt-categories';
+
+    $result = call_authenticated_api($endpoint, null, 'GET');
+    $response = $result['response'];
+    $http_code = $result['code'];
+
+    if (!$response || $http_code !== 200) {
+        // On error, set empty array (handle in UI)
+        return [];
+    }
+
+    $categories = json_decode($response, true);
+    return is_array($categories) ? $categories : [];
+}

@@ -24,7 +24,7 @@ $categoryId = trim($_POST['category'] ?? null); // From select, null if empty
 $version = trim($_POST['version'] ?? 'v1'); // Use posted value
 $tags_str = trim($_POST['tags'] ?? ''); // Comma-separated from hidden input
 $tags = $tags_str ? array_map('trim', explode(',', $tags_str)) : []; // To array
-
+$categoryId = trim($_POST['category'] ?? '');
 // Validation (simple)
 if (empty($id) || empty($title) || empty($body)) {
     http_response_code(400);
@@ -37,6 +37,7 @@ $data = [
     'title' => $title,
     'body' => $body,
     'tags' => $tags,
+    'categoryId' => $categoryId,
     'version' => $version
 ];
 if ($categoryId) {

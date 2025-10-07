@@ -46,7 +46,10 @@ $title = $hasPrompt ? $prompt['title'] : '';
 $version = $hasPrompt ? $prompt['version'] : '1.0';
 $body = $hasPrompt ? $prompt['body'] : '';
 $tags_str = $hasPrompt && $prompt['tags'] ? implode(',', $prompt['tags']) : '';
-$category = $hasPrompt ? ($prompt['categoryId'] ?? '') : ''; // For select, but null -> empty
+$category = $hasPrompt ? ($prompt['categoryId'] ?? '') : '';
+$categories = fetch_categories();
+$current_category_name = $prompt['category']['name'] ?? 'SEO';
+$current_category_id = $prompt['category']['id'] ?? '';
 ?>
 
 <style>
@@ -117,12 +120,20 @@ $category = $hasPrompt ? ($prompt['categoryId'] ?? '') : ''; // For select, but 
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Category</label>
-                        <select class="form-select" id="category" name="category">
+                        <select class="form-select" id="category" name="category" required>
                             <option value="">Select a category</option>
-                            <option value="design" <?php echo $category === 'design' ? 'selected' : ''; ?>>Design</option>
-                            <option value="marketing" <?php echo $category === 'marketing' ? 'selected' : ''; ?>>Marketing</option>
-                            <option value="coding" <?php echo $category === 'coding' ? 'selected' : ''; ?>>Coding</option>
-                            <option value="seo" <?php echo $category === 'seo' ? 'selected' : ''; ?>>SEO</option>
+                            <?php if (!empty($categories)): ?>
+                                <?php foreach ($categories as $cat): ?>
+                                    <?php
+                                    $cat_id = $cat['id'] ?? '';
+                                    $cat_name = $cat['name'] ?? '';
+                                    $selected = ($cat_name === $current_category_name) ? 'selected' : '';
+                                    ?>
+                                    <option value="<?php echo htmlspecialchars($cat_id); ?>" <?php echo $selected; ?>>
+                                        <?php echo htmlspecialchars($cat_name); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
                     </div>
                     <div class="form-group">
