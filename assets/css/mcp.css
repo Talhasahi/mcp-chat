@@ -306,7 +306,6 @@ body {
     align-items: center;
     width: 100%;
     max-width: 100%;
-    margin: 20px 0;
 }
 
 .search-input {
@@ -1262,47 +1261,11 @@ body {
 }
 
 
-/* My Prompts Specific Styles */
-.prompt-list-container {
-    background-color: #FFFFFF;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    height: calc(100vh - 100px);
-    /* Adjust for header and margin */
-    overflow-y: auto;
-    /* Independent scroll for prompts */
-}
 
-.prompt-list-item {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #E4E4E7;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
 
-.prompt-list-item:hover {
-    background-color: #F0F0F0;
-}
 
-.prompt-list-item img {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 10px;
-}
 
-.prompt-list-item p {
-    font-size: 14px;
-    color: #000000;
-    margin: 0;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+
 
 .chat-section {
     display: flex;
@@ -1311,15 +1274,7 @@ body {
     /* Match prompt-list-container height */
 }
 
-.chat-container {
-    flex: 1;
-    overflow-y: auto;
-    /* Independent scroll for messages */
-    padding: 20px;
-    background-color: #FFFFFF;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+
 
 .chat-message {
     display: flex;
@@ -1455,6 +1410,12 @@ body {
         /* Reduced padding */
     }
 
+    .main-content-padding {
+        padding: 0 2px 2px 2px !important;
+        /* ✅ Force this padding */
+    }
+
+
     .main-header {
         margin: 5px 0;
         /* Reduced margin */
@@ -1463,11 +1424,6 @@ body {
     .chat-section {
         height: calc(100vh - 60px);
         /* Adjust for reduced header margins */
-    }
-
-    .chat-container {
-        padding: 10px;
-        /* Reduced padding */
     }
 
     .chat-message {
