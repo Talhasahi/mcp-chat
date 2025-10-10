@@ -19,7 +19,13 @@ if (is_logged_in()) {
             <?php foreach ($conversations as $conv): ?>
                 <?php if (!$conv['archived']): ?>
                     <div class="prompt-list-item" data-id="<?php echo htmlspecialchars($conv['id']); ?>" data-title="<?php echo htmlspecialchars($conv['title']); ?>">
-                        <p><?php echo htmlspecialchars($conv['title']); ?></p>
+
+                        <p
+                            style="cursor: pointer;"
+                            onclick="window.location.href='my_prompt.php?id=<?php echo urlencode($conv['id']); ?>'">
+                            <?php echo htmlspecialchars($conv['title']); ?>
+                        </p>
+
                     </div>
                 <?php endif; ?>
             <?php endforeach; ?>

@@ -3,7 +3,11 @@ $page_title = "MCP Chat - My Prompts";
 $page_icon = "fas fa-plus";
 include 'includes/header.php';
 include 'includes/sidebar.php';
-
+$conversationId = $_GET['id'] ?? null;
+$conversation_messages = get_conversation_messages($conversationId);
+if (isset($conversation_messages['error'])) {
+    $conversation_messages = []; // Treat error as empty
+}
 ?>
 
 <style>
@@ -280,7 +284,6 @@ include 'includes/sidebar.php';
             /* Reduced padding */
         }
 
-
         .main-header {
             margin: 5px 0;
             /* Reduced margin */
@@ -338,68 +341,44 @@ include 'includes/sidebar.php';
 </style>
 
 <div class="main-content" style="padding: 0 0px 0px 0px;">
-    <?php include  'includes/common-header.php'; ?>
+    <?php include 'includes/common-header.php'; ?>
 
     <div class="row">
         <!-- Left Sidebar (col-3) -->
         <div class="col-3">
-            <?php include  'prompt_history.php'; ?>
+            <?php include 'prompt_history.php'; ?>
         </div>
 
         <!-- Right Chat Section (col-9) -->
         <div class="col-9">
             <div class="chat-section">
-                <div class="chat-container">
-                    <!-- Sample Chat Messages -->
-                    <div class="chat-message user">
-                        <div class="message-content">Can you suggest taglines for a luxury perfume?</div>
-                        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-                    </div>
-                    <div class="chat-message ai">
-                        <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                        <div class="message-content">1. "Elegance in Every Note" <br> 2. "Scent of Sophistication" <br> 3. "Unleash Your Essence"</div>
-                    </div>
-                    <div class="chat-message user">
-                        <div class="message-content">What are some launch campaign ideas?</div>
-                        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-                    </div>
-                    <div class="chat-message ai">
-                        <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                        <div class="message-content">Host an exclusive launch event with influencers. <br> <img src="assets/images/ai-chat.jpg" alt="Campaign Image"></div>
-                    </div>
-                    <div class="chat-message user">
-                        <div class="message-content">Give me 5 name ideas for a skincare brand.</div>
-                        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-                    </div>
-                    <div class="chat-message ai">
-                        <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                        <div class="message-content">1. GlowVibe <br> 2. PurelyRadiant <br> 3. SkinBloom <br> 4. LushCare <br> 5. DermaGlow</div>
-                    </div>
-                    <div class="chat-message user">
-                        <div class="message-content">Write a LinkedIn post for a product launch.</div>
-                        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-                    </div>
-                    <div class="chat-message ai">
-                        <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                        <div class="message-content">Excited to announce our new product! 🚀 Join us in revolutionizing skincare. #ProductLaunch</div>
-                    </div>
-                    <div class="chat-message user">
-                        <div class="message-content">Can you brainstorm marketing strategies?</div>
-                        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-                    </div>
-                    <div class="chat-message ai">
-                        <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                        <div class="message-content">Leverage social media ads and collaborate with micro-influencers. <br> <img src="assets/images/ai-chat.jpg" alt="Strategy Image"></div>
-                    </div>
-                    <!-- Additional messages for scroll testing -->
-                    <div class="chat-message user">
-                        <div class="message-content">Can you create a social media plan?</div>
-                        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-                    </div>
-                    <div class="chat-message ai">
-                        <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                        <div class="message-content">Daily posts on Instagram and Twitter with targeted ads. <br> <img src="assets/images/ai-chat.jpg" alt="Plan Image"></div>
-                    </div>
+                <div class="chat-container" id="chatContainer">
+                    <?php if (!empty($conversation_messages) && is_array($conversation_messages)): ?>
+                        <?php foreach ($conversation_messages as $msg): ?>
+                            <?php
+                            $isUser = ($msg['role'] === 'user');
+                            $avatarSrc = $isUser ? 'assets/images/author-avatar.png' : 'assets/images/favicon.png';
+                            $roleClass = $isUser ? 'user' : 'ai';
+                            ?>
+                            <div class="chat-message <?php echo $roleClass; ?>">
+                                <?php if (!$isUser): ?>
+                                    <img src="<?php echo $avatarSrc; ?>" alt="<?php echo $isUser ? 'User' : 'AI'; ?> Avatar" class="avatar">
+                                <?php endif; ?>
+                                <div class="message-content"><?php echo nl2br(htmlspecialchars($msg['content'])); ?></div>
+                                <?php if ($isUser): ?>
+                                    <img src="<?php echo $avatarSrc; ?>" alt="<?php echo $isUser ? 'User' : 'AI'; ?> Avatar" class="avatar">
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                        <script>
+                            document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
+                        </script>
+                    <?php else: ?>
+                        <div class="chat-message user">
+                            <div class="message-content">Select a prompt from the left to load the chat or start a new one.</div>
+                            <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <!-- Chat Input within col-9 and chat-section (contained, not full screen) -->
                 <div class="chat-input-container">
@@ -419,9 +398,14 @@ include 'includes/sidebar.php';
 </div>
 
 <script>
+    const conversationId = '<?php echo $conversationId ?? ''; ?>'; // From PHP
+    const token = localStorage.getItem('token') || '<?php echo $_SESSION['token'] ?? ''; ?>';
+    const chatProxyUrl = 'auth/chat.php'; // Proxy endpoint
+
     // Auto-resize textarea on input (non-disruptive)
     document.addEventListener('DOMContentLoaded', () => {
         const chatInput = document.getElementById('chatInput');
+        const chatContainer = document.getElementById('chatContainer');
 
         if (chatInput) {
             // Initial height set
@@ -442,29 +426,88 @@ include 'includes/sidebar.php';
                 }
             });
         }
-    });
 
-    // Handle send button click (placeholder - no API call, just clear and alert for now)
-    document.addEventListener('DOMContentLoaded', () => {
+        // Handle send button click
         const sendBtn = document.querySelector('.send-btn');
-        const chatInput = document.getElementById('chatInput');
-
         if (sendBtn && chatInput) {
-            sendBtn.addEventListener('click', (e) => {
+            sendBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
 
-                // Get input value
                 let inputText = chatInput.value.trim();
                 if (!inputText) {
                     alert('Please enter a message!');
                     return;
                 }
 
-                // Placeholder action: Clear input and reset height (add real logic later)
+                if (!conversationId || !token) {
+                    alert('Please select a conversation and log in.');
+                    return;
+                }
+
+                // Disable send and show loading
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                // Add user message to UI immediately
+                const userMessageHtml = `
+                    <div class="chat-message user">
+                        <div class="message-content">${inputText.replace(/\n/g, '<br>')}</div>
+                        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
+                    </div>
+                `;
+                chatContainer.innerHTML += userMessageHtml;
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Clear input
                 chatInput.value = '';
                 chatInput.style.height = 'auto';
                 chatInput.style.height = chatInput.scrollHeight + 'px';
-                alert('Message sent! (No API call - implement as needed)');
+
+                try {
+                    // Send to proxy
+                    const response = await fetch(chatProxyUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            conversationId: conversationId,
+                            content: inputText
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Failed to send message');
+                    }
+
+                    // Append AI response (use result.content as per your example JSON)
+                    const aiContent = result.content || 'AI response received.';
+                    const aiMessageHtml = `
+                        <div class="chat-message ai">
+                            <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
+                            <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+                    chatContainer.innerHTML += aiMessageHtml;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    const errorHtml = `
+                        <div class="chat-message ai">
+                            <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
+                            <div class="message-content" style="color: red;">Error: ${error.message}</div>
+                        </div>
+                    `;
+                    chatContainer.innerHTML += errorHtml;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                } finally {
+                    // Re-enable send
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                }
             });
         }
     });

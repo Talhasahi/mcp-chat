@@ -81,6 +81,42 @@ $page_icon = "fas fa-home";
         }
     });
 
+    async function sendInitialMessage(conversationId, message) {
+        const token = localStorage.getItem('token') || ''; // Or from session if needed
+        const chatProxyUrl = 'auth/chat.php';
+
+        try {
+            const response = await fetch(chatProxyUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    conversationId: conversationId,
+                    content: message
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to send initial message');
+            }
+
+            console.log('Initial message sent:', result); // Optional log
+            return result; // Returns the AI response if needed
+
+        } catch (error) {
+            console.error('Error sending initial message:', error);
+            // Optional: Show alert or handle error
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Failed to send initial message: ' + error.message
+            });
+            throw error; // Re-throw to stop redirect if critical
+        }
+    }
     // Handle send button click to create conversation and redirect
     document.addEventListener('DOMContentLoaded', () => {
         const sendBtn = document.querySelector('.send-btn');
@@ -93,6 +129,7 @@ $page_icon = "fas fa-home";
 
                 // Get input value, trim to first 3 words
                 let inputText = chatInput.value.trim();
+                var org = inputText;
                 let title = 'My first chat'; // Fallback
 
                 if (inputText) {
@@ -127,6 +164,7 @@ $page_icon = "fas fa-home";
                         chatInput.style.height = 'auto';
                         chatInput.style.height = chatInput.scrollHeight + 'px';
                         // Redirect to my_prompt.php with id
+                        await sendInitialMessage(result.id, org);
                         window.location.href = `my_prompt.php?id=${result.id}`;
                     } else {
                         Swal.fire({

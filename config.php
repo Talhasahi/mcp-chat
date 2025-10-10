@@ -265,7 +265,7 @@ function call_authenticated_api($endpoint, $data, $method = 'POST')
     ];
     $opts = [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 10,
+        CURLOPT_TIMEOUT => 600,
         CURLOPT_HTTPHEADER => $headers
     ];
     if ($method === 'POST') {
@@ -329,4 +329,61 @@ function get_conversations()
 
     $decoded = json_decode($response, true);
     return is_array($decoded) ? $decoded : [];
+}
+// Add this function to config.php (uses call_authenticated_api for GET /conversations/{id}/messages)
+
+function get_conversation_messages($conversationId)
+{
+    start_session();
+    $token = $_SESSION['token'] ?? '';
+    if (!$token) {
+        return ['error' => 'No authentication token – please log in again.'];
+    }
+
+    $endpoint = "/conversations/$conversationId/messages";
+    $result = call_authenticated_api($endpoint, null, 'GET');
+    $response = $result['response'];
+    $http_code = $result['code'];
+
+    if (!$response || $http_code !== 200) {
+        $data = json_decode($response, true);
+        $msg = $data['error'] ?? 'Unknown API error';
+        return ['error' => $msg];
+    }
+
+    $decoded = json_decode($response, true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+// Add this function to config.php (uses call_authenticated_api for POST /chat)
+function send_message($conversationId, $message)
+{
+    start_session();
+    $token = $_SESSION['token'] ?? '';
+    if (!$token) {
+        return ['error' => 'No authentication token – please log in again.'];
+    }
+
+    $data = [
+        'conversationId' => $conversationId,
+        'messages' => [
+            [
+                'role' => 'user',
+                'content' => $message
+            ]
+        ]
+    ];
+
+    $endpoint = '/chat';
+    $result = call_authenticated_api($endpoint, $data, 'POST');
+    $response = $result['response'];
+    $http_code = $result['code'];
+
+    if (!$response || ($http_code !== 200 && $http_code !== 201)) {
+        $decoded = json_decode($response, true);
+        return ['error' => $decoded['error'] ?? 'Failed to send message'];
+    }
+
+    $decoded = json_decode($response, true);
+    return $decoded ?? ['success' => true]; // Returns full response incl. content
 }
