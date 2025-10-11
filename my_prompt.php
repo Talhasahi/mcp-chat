@@ -563,8 +563,9 @@ if (isset($conversation_messages['error'])) {
 <script>
     const conversationId = '<?php echo $conversationId ?? ''; ?>'; // From PHP
     const token = localStorage.getItem('token') || '<?php echo $_SESSION['token'] ?? ''; ?>';
-    const chatProxyUrl = 'auth/chat.php'; // Proxy endpoint
-    const feedbackProxyUrl = 'auth/feedback.php'; // Feedback proxy
+    const chatProxyUrl = 'auth/chat.php';
+    const feedbackProxyUrl = 'auth/feedback.php';
+    let suggestionOverride = null;
 
     // Auto-resize textarea on input (non-disruptive)
     document.addEventListener('DOMContentLoaded', () => {
@@ -596,6 +597,8 @@ if (isset($conversation_messages['error'])) {
         if (sendBtn && chatInput) {
             sendBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
+
+
 
                 let inputText = chatInput.value.trim();
                 if (!inputText) {
@@ -636,6 +639,17 @@ if (isset($conversation_messages['error'])) {
                 chatInput.style.height = 'auto';
                 chatInput.style.height = chatInput.scrollHeight + 'px';
 
+
+                let sendContent = inputText; // Default to user input
+                if (suggestionOverride && suggestionOverride.fullPrompt) {
+                    sendContent = suggestionOverride.fullPrompt; // Use full template
+                    suggestionOverride = null; // Clear after use
+                }
+
+                document.querySelectorAll('.suggestions-section').forEach(sec => sec.style.display = 'none');
+
+
+
                 try {
                     // Send to proxy
                     const response = await fetch(chatProxyUrl, {
@@ -645,7 +659,7 @@ if (isset($conversation_messages['error'])) {
                         },
                         body: JSON.stringify({
                             conversationId: conversationId,
-                            content: inputText
+                            content: sendContent
                         })
                     });
 
@@ -663,28 +677,28 @@ if (isset($conversation_messages['error'])) {
                             <div class="suggestions-section">
                                 <div class="suggestions-title">Suggestions:</div>
                                 <div class="suggestions-list">
-                                    ${result.nextSuggestions.map(sugg => `<span class="suggestion-item" onclick="applySuggestion('${sugg.label}', '${sugg.key}')">${sugg.label}</span>`).join('')}
+                                  ${result.nextSuggestions.map(sugg => `<span class="suggestion-item" onclick="applySuggestion('${sugg.key}')">${sugg.label}</span>`).join('')}
                                 </div>
                             </div>
                         `;
                     }
                     const aiMessageHtml = `
-                        <div class="chat-message ai">
-                            <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                            <div class="message-wrapper" data-assistant-id="${result.assistantMessageId || ''}" data-feedback-state="none">
-                                <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
-                                <div class="feedback-buttons">
-                                    <button class="feedback-btn thumbs-up" title="Helpful">
-                                        <i class="fas fa-thumbs-up"></i>
-                                    </button>
-                                    <button class="feedback-btn thumbs-down" title="Not helpful">
-                                        <i class="fas fa-thumbs-down"></i>
-                                    </button>
-                                </div>
-                                ${suggestionsHtml}
-                            </div>
-                        </div>
-                    `;
+    <div class="chat-message ai">
+        <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
+        <div class="message-wrapper" data-assistant-id="${result.assistantMessageId || ''}" data-feedback-state="none" data-suggestions='${JSON.stringify(result.nextSuggestions || [])}'>
+            <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
+            <div class="feedback-buttons">
+                <button class="feedback-btn thumbs-up" title="Helpful">
+                    <i class="fas fa-thumbs-up"></i>
+                </button>
+                <button class="feedback-btn thumbs-down" title="Not helpful">
+                    <i class="fas fa-thumbs-down"></i>
+                </button>
+            </div>
+            ${suggestionsHtml}
+        </div>
+    </div>
+`;
                     chatContainer.innerHTML += aiMessageHtml;
                     chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -813,16 +827,51 @@ if (isset($conversation_messages['error'])) {
         // Later: Trigger comparison API, e.g., fetch('/compare?type=' + type + '&messageId=...')
     }
 
-    function applySuggestion(label, key) {
+    function applySuggestion(key) {
+        const clickedItem = event.target; // From onclick event
+        const messageWrapper = clickedItem.closest('.message-wrapper');
+        if (!messageWrapper) {
+            console.error('No message wrapper found');
+            return;
+        }
+
+        // Get previous AI content (plain text)
+        const prevContentEl = messageWrapper.querySelector('.message-content');
+        if (!prevContentEl) {
+            console.error('No previous content found');
+            return;
+        }
+        const prevText = prevContentEl.textContent.trim(); // Strip HTML for template
+
+        // Get suggestions array from data
+        const suggestionsStr = messageWrapper.dataset.suggestions;
+        const suggestions = suggestionsStr ? JSON.parse(suggestionsStr) : [];
+        const sugg = suggestions.find(s => s.key === key);
+        if (!sugg || !sugg.template) {
+            console.error('Suggestion not found or missing template:', key);
+            return;
+        }
+
+        // Build full prompt: Replace {{TEXT}} with prevText; hardcode {{LANG}} to 'German' if present
+        let fullPrompt = sugg.template;
+        fullPrompt = fullPrompt.replace('{{TEXT}}', prevText);
+        if (fullPrompt.includes('{{LANG}}')) {
+            fullPrompt = fullPrompt.replace('{{LANG}}', 'German');
+        }
+
+        // Set label in input for user view, but override payload for send
         const chatInput = document.getElementById('chatInput');
         const sendBtn = document.querySelector('.send-btn');
         if (chatInput && sendBtn) {
-            chatInput.value = label; // Assign the suggestion label as the message
+            chatInput.value = sugg.label; // Show friendly label
             chatInput.style.height = 'auto';
             chatInput.style.height = chatInput.scrollHeight + 'px'; // Auto-resize
+            suggestionOverride = {
+                fullPrompt
+            }; // Flag for send handler
             sendBtn.click(); // Auto-trigger send
         }
-        console.log(`Applying suggestion: ${label} (${key})`);
+        console.log(`Applying suggestion: ${key} with full prompt`);
     }
 </script>
 
