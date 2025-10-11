@@ -3,6 +3,8 @@ $page_title = "MCP Chat - AI Desk";
 include 'includes/header.php';
 include 'includes/sidebar.php';
 $page_icon = "fas fa-home";
+$suggestions = get_default_suggestions();
+
 ?>
 <style>
 
@@ -42,10 +44,16 @@ $page_icon = "fas fa-home";
     </div>
 </div>
 <div class="suggested-prompts mb-2">
-    <div class="suggested-prompt"><i class="fas fa-lightbulb"></i>Suggest taglines for a luxury perfume</div>
-    <div class="suggested-prompt"><i class="fas fa-lightbulb"></i>What are some launch campaign ideas?</div>
-    <div class="suggested-prompt"><i class="fas fa-lightbulb"></i>Give me 5 name ideas for a skincare brand</div>
-    <div class="suggested-prompt"><i class="fas fa-lightbulb"></i>Write a LinkedIn post announcing a product launch</div>
+    <?php if (!empty($suggestions)): ?>
+        <?php foreach ($suggestions as $suggestion): ?>
+            <div onclick="selectSuggestion('<?php echo htmlspecialchars($suggestion['icon']); ?> <?php echo htmlspecialchars($suggestion['label']); ?>')" class="suggested-prompt">
+                <span class="suggestion-icon"><?php echo htmlspecialchars($suggestion['icon']); ?></span><?php echo htmlspecialchars($suggestion['label']); ?>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <!-- Fallback if empty -->
+        <div class="suggested-prompt"><span class="suggestion-icon">💡</span>No suggestions available</div>
+    <?php endif; ?>
 </div>
 <div class="chat-input mb-2">
     <?php include 'mcp-tools.php'; ?>
@@ -56,6 +64,16 @@ $page_icon = "fas fa-home";
 </div>
 
 <script>
+    function selectSuggestion(fullMessage) {
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.value = fullMessage;
+            chatInput.style.height = 'auto';
+            chatInput.style.height = chatInput.scrollHeight + 'px'; // Auto-resize
+            const sendBtn = document.querySelector('.send-btn');
+            sendBtn.click();
+        }
+    }
     // Auto-resize textarea on input (non-disruptive)
     document.addEventListener('DOMContentLoaded', () => {
         const chatInput = document.getElementById('chatInput');

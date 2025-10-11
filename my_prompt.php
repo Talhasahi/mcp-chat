@@ -338,6 +338,139 @@ if (isset($conversation_messages['error'])) {
             /* No centering */
         }
     }
+
+    .message-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        max-width: 70%;
+        /* Keep content constrained */
+    }
+
+    /* Fix for user messages: Right-align content and actions */
+    .chat-message.user .message-wrapper {
+        align-items: flex-end;
+    }
+
+    .chat-message.user .user-actions {
+        align-items: flex-end;
+    }
+
+    .feedback-buttons {
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+        opacity: 0.6;
+        transition: opacity 0.2s ease;
+        align-self: flex-start;
+    }
+
+    .feedback-buttons:hover {
+        opacity: 1;
+    }
+
+    .feedback-btn {
+        background: none;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 2px 6px;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+        min-width: 28px;
+        /* Square-ish for icons */
+    }
+
+    .feedback-btn:hover {
+        color: #555;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .feedback-btn.selected {
+        background-color: rgba(40, 167, 69, 0.2);
+        /* Light green for up */
+    }
+
+    .thumbs-down.selected {
+        background-color: rgba(220, 53, 69, 0.2);
+        /* Light red for down */
+    }
+
+    .user-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        margin-top: 4px;
+        gap: 2px;
+    }
+
+    .compare-text {
+        color: #666;
+        font-size: 11px;
+        font-style: italic;
+        margin: 0;
+        align-self: flex-end;
+    }
+
+    .grok-options {
+        display: flex;
+        gap: 8px;
+    }
+
+    .grok-option {
+        color: #00B7E5;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 3px;
+        transition: background-color 0.2s ease;
+        text-decoration: none;
+    }
+
+    .grok-option:hover {
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+
+    /* Suggestions UI (below feedback, AI-only) */
+    .suggestions-section {
+        margin-top: 10px;
+        padding: 8px;
+        background-color: rgba(240, 240, 240, 0.5);
+        border-radius: 8px;
+        align-self: flex-start;
+    }
+
+    .suggestions-title {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 6px;
+        font-weight: bold;
+    }
+
+    .suggestions-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .suggestion-item {
+        background-color: #FFFFFF;
+        color: #00B7E5;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        cursor: pointer;
+        border: 1px solid #E4E4E7;
+        transition: all 0.2s ease;
+    }
+
+    .suggestion-item:hover {
+        background-color: #00B7E5;
+        color: #FFFFFF;
+        border-color: #00B7E5;
+    }
 </style>
 
 <div class="main-content" style="padding: 0 0px 0px 0px;">
@@ -360,15 +493,44 @@ if (isset($conversation_messages['error'])) {
                             $avatarSrc = $isUser ? 'assets/images/author-avatar.png' : 'assets/images/favicon.png';
                             $roleClass = $isUser ? 'user' : 'ai';
                             ?>
-                            <div class="chat-message <?php echo $roleClass; ?>">
-                                <?php if (!$isUser): ?>
-                                    <img src="<?php echo $avatarSrc; ?>" alt="<?php echo $isUser ? 'User' : 'AI'; ?> Avatar" class="avatar">
-                                <?php endif; ?>
-                                <div class="message-content"><?php echo nl2br(htmlspecialchars($msg['content'])); ?></div>
-                                <?php if ($isUser): ?>
-                                    <img src="<?php echo $avatarSrc; ?>" alt="<?php echo $isUser ? 'User' : 'AI'; ?> Avatar" class="avatar">
-                                <?php endif; ?>
-                            </div>
+                            <?php if ($isUser): ?>
+                                <div class="chat-message user">
+                                    <div class="message-wrapper">
+                                        <div class="message-content"><?php echo nl2br(htmlspecialchars($msg['content'])); ?></div>
+                                        <div class="user-actions">
+                                            <small class="compare-text">Compare with Grok</small>
+                                            <div class="grok-options">
+                                                <span class="grok-option" onclick="compareWithGrok(this, 'grok')">Grok</span>
+                                                <span class="grok-option" onclick="compareWithGrok(this, 'simple')">Simple</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <img src="<?php echo $avatarSrc; ?>" alt="User Avatar" class="avatar">
+                                </div>
+                            <?php else: ?>
+                                <!-- AI message: With feedback + suggestions section -->
+                                <div class="chat-message ai">
+                                    <img src="<?php echo $avatarSrc; ?>" alt="AI Avatar" class="avatar">
+                                    <div class="message-wrapper">
+                                        <div class="message-content"><?php echo nl2br(htmlspecialchars($msg['content'])); ?></div>
+                                        <div class="feedback-buttons">
+                                            <button class="feedback-btn thumbs-up" title="Helpful">
+                                                <i class="fas fa-thumbs-up"></i>
+                                            </button>
+                                            <button class="feedback-btn thumbs-down" title="Not helpful">
+                                                <i class="fas fa-thumbs-down"></i>
+                                            </button>
+                                        </div>
+                                        <!-- Suggestions placeholder for loaded messages (fetch separately if needed) -->
+                                        <div class="suggestions-section" style="display: none;">
+                                            <div class="suggestions-title">Try these:</div>
+                                            <div class="suggestions-list">
+                                                <!-- Dynamically populated via JS if available -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                         <script>
                             document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
@@ -450,11 +612,20 @@ if (isset($conversation_messages['error'])) {
 
                 // Add user message to UI immediately
                 const userMessageHtml = `
-                    <div class="chat-message user">
-                        <div class="message-content">${inputText.replace(/\n/g, '<br>')}</div>
-                        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-                    </div>
-                `;
+    <div class="chat-message user">
+        <div class="message-wrapper">
+            <div class="message-content">${inputText.replace(/\n/g, '<br>')}</div>
+            <div class="user-actions">
+                <small class="compare-text">Compare with Grok</small>
+                <div class="grok-options">
+                    <span class="grok-option" onclick="compareWithGrok(this, 'grok')">Grok</span>
+                    <span class="grok-option" onclick="compareWithGrok(this, 'simple')">Simple</span>
+                </div>
+            </div>
+        </div>
+        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
+    </div>
+`;
                 chatContainer.innerHTML += userMessageHtml;
                 chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -478,16 +649,40 @@ if (isset($conversation_messages['error'])) {
 
                     const result = await response.json();
 
+                    console.log();
+
                     if (!response.ok) {
                         throw new Error(result.error || 'Failed to send message');
                     }
 
                     // Append AI response (use result.content as per your example JSON)
                     const aiContent = result.content || 'AI response received.';
+                    let suggestionsHtml = '';
+                    if (result.nextSuggestions && Array.isArray(result.nextSuggestions) && result.nextSuggestions.length > 0) {
+                        suggestionsHtml = `
+                            <div class="suggestions-section">
+                                <div class="suggestions-title">Try these:</div>
+                                <div class="suggestions-list">
+                                    ${result.nextSuggestions.map(sugg => `<span class="suggestion-item" onclick="applySuggestion('${sugg.label}', '${sugg.key}')">${sugg.label}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
                     const aiMessageHtml = `
                         <div class="chat-message ai">
                             <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                            <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
+                            <div class="message-wrapper">
+                                <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
+                                <div class="feedback-buttons">
+                                    <button class="feedback-btn thumbs-up" title="Helpful">
+                                        <i class="fas fa-thumbs-up"></i>
+                                    </button>
+                                    <button class="feedback-btn thumbs-down" title="Not helpful">
+                                        <i class="fas fa-thumbs-down"></i>
+                                    </button>
+                                </div>
+                                ${suggestionsHtml}
+                            </div>
                         </div>
                     `;
                     chatContainer.innerHTML += aiMessageHtml;
@@ -510,7 +705,43 @@ if (isset($conversation_messages['error'])) {
                 }
             });
         }
+
+        // Feedback click handlers (UI only – connect API later)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.feedback-btn')) {
+                const btn = e.target.closest('.feedback-btn');
+                const isUp = btn.classList.contains('thumbs-up');
+                const messageWrapper = btn.closest('.message-wrapper');
+
+                // Remove selected from siblings
+                const siblings = messageWrapper.querySelectorAll('.feedback-btn');
+                siblings.forEach(sib => sib.classList.remove('selected'));
+
+                // Add selected to this
+                btn.classList.add('selected');
+
+                // Stub: console.log for now
+                console.log(`Feedback: ${isUp ? 'Up' : 'Down'} for message`);
+            }
+        });
     });
+
+    function compareWithGrok(span, type) {
+        // Stub: Highlight selected for now
+        document.querySelectorAll('.grok-option').forEach(opt => opt.style.backgroundColor = '');
+        span.style.backgroundColor = 'rgba(0, 123, 255, 0.2)';
+
+        console.log(`Compare with ${type} Grok for user message`);
+        // Later: Trigger comparison API, e.g., fetch('/compare?type=' + type + '&messageId=...')
+    }
+
+    // Stub for applying suggestions (UI only – connect to new chat call later)
+    function applySuggestion(label, key) {
+        console.log(`Applying suggestion: ${label} (${key})`);
+        // Later: e.g., populate chatInput with template + content, then send
+        // Example: chatInput.value = suggestion.template.replace('{{TEXT}}', previousContent);
+        // Then sendBtn.click();
+    }
 </script>
 
 <?php include 'includes/footer.php'; ?>

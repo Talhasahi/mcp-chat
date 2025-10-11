@@ -387,3 +387,34 @@ function send_message($conversationId, $message)
     $decoded = json_decode($response, true);
     return $decoded ?? ['success' => true]; // Returns full response incl. content
 }
+
+function get_default_suggestions($limit = 8)
+{
+    global $api_base_url; // From config.php
+    $token = $_SESSION['token'] ?? ''; // Assuming session started via start_session() in config or header
+    if (empty($token)) {
+        return []; // Empty if not logged in
+    }
+
+    $url = rtrim($api_base_url, '/') . '/suggestions?mode=composer&limit=' . $limit;
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token,
+        ],
+        CURLOPT_TIMEOUT => 10,
+    ]);
+
+    $raw = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($raw === false || $code !== 200) {
+        return []; // Return empty on error
+    }
+
+    $data = json_decode($raw, true);
+    return $data['suggestions'] ?? [];
+}
