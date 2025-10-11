@@ -414,19 +414,8 @@ if (isset($conversation_messages['error'])) {
         align-self: flex-end;
     }
 
-    .grok-options {
-        display: flex;
-        gap: 8px;
-    }
-
     .grok-option {
         color: #00B7E5;
-        font-size: 12px;
-        cursor: pointer;
-        padding: 2px 6px;
-        border-radius: 3px;
-        transition: background-color 0.2s ease;
-        text-decoration: none;
     }
 
     .grok-option:hover {
@@ -471,6 +460,49 @@ if (isset($conversation_messages['error'])) {
         color: #FFFFFF;
         border-color: #00B7E5;
     }
+
+    /* AI actions: Feedback + Compare (right of dislike) */
+    .ai-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 6px;
+        opacity: 0.6;
+        transition: opacity 0.2s ease;
+    }
+
+    .ai-actions:hover {
+        /* opacity: 1; */
+    }
+
+    .ai-actions .feedback-buttons {
+        display: flex;
+        gap: 6px;
+    }
+
+
+
+    .ai-actions .compare-text {
+        font-size: 11px;
+        color: #666;
+        font-style: italic;
+        margin-right: 4px;
+    }
+
+    .change-provider {
+        cursor: pointer;
+
+        font-size: 11px;
+        color: #00B7E5;
+        font-style: italic;
+        align-self: flex-end;
+
+    }
+
+    .change-provider:hover {
+        color: #009EC9;
+        font-size: 11.50px;
+    }
 </style>
 
 <div class="main-content" style="padding: 0 0px 0px 0px;">
@@ -498,33 +530,32 @@ if (isset($conversation_messages['error'])) {
                                 <div class="chat-message user">
                                     <div class="message-wrapper">
                                         <div class="message-content"><?php echo nl2br(htmlspecialchars($msg['content'])); ?></div>
-                                        <div class="user-actions">
-                                            <small class="compare-text">Compare with Grok</small>
-                                            <div class="grok-options">
-                                                <span class="grok-option" onclick="compareWithGrok(this, 'grok')">Grok</span>
-                                                <span class="grok-option" onclick="compareWithGrok(this, 'simple')">Simple</span>
-                                            </div>
-                                        </div>
                                     </div>
                                     <img src="<?php echo $avatarSrc; ?>" alt="User Avatar" class="avatar">
                                 </div>
                             <?php else: ?>
-                                <!-- AI message: With feedback + suggestions section -->
+                                <!-- AI message: With feedback + compare options right of dislike -->
                                 <div class="chat-message ai">
                                     <img src="<?php echo $avatarSrc; ?>" alt="AI Avatar" class="avatar">
                                     <div class="message-wrapper" data-assistant-id="<?php echo htmlspecialchars($assistantId); ?>" data-feedback-state="none">
                                         <div class="message-content"><?php echo nl2br(htmlspecialchars($msg['content'])); ?></div>
-                                        <div class="feedback-buttons">
-                                            <button class="feedback-btn thumbs-up" title="Helpful">
-                                                <i class="fas fa-thumbs-up"></i>
-                                            </button>
-                                            <button class="feedback-btn thumbs-down" title="Not helpful">
-                                                <i class="fas fa-thumbs-down"></i>
-                                            </button>
+                                        <div class="ai-actions">
+                                            <div class="feedback-buttons">
+                                                <button class="feedback-btn thumbs-up" title="Helpful">
+                                                    <i class="fas fa-thumbs-up"></i>
+                                                </button>
+                                                <button class="feedback-btn thumbs-down" title="Not helpful">
+                                                    <i class="fas fa-thumbs-down"></i>
+                                                </button>
+                                            </div>
+                                            <small class="compare-text">Compare with:</small>
+                                            <small class="change-provider" onclick="compareWithGrok(this, 'grok')">Grok</small>
+                                            <small class="change-provider" onclick="compareWithGrok(this, 'simple')">Simple</small>
+
                                         </div>
                                         <!-- Suggestions placeholder for loaded messages (fetch separately if needed) -->
                                         <div class="suggestions-section" style="display: none;">
-                                            <div class="suggestions-title">Try these:</div>
+                                            <div class="suggestions-title">Suggestions:</div>
                                             <div class="suggestions-list">
                                                 <!-- Dynamically populated via JS if available -->
                                             </div>
@@ -598,8 +629,6 @@ if (isset($conversation_messages['error'])) {
             sendBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
 
-
-
                 let inputText = chatInput.value.trim();
                 if (!inputText) {
                     alert('Please enter a message!');
@@ -620,13 +649,6 @@ if (isset($conversation_messages['error'])) {
     <div class="chat-message user">
         <div class="message-wrapper">
             <div class="message-content">${inputText.replace(/\n/g, '<br>')}</div>
-            <div class="user-actions">
-                <small class="compare-text">Compare with Grok</small>
-                <div class="grok-options">
-                    <span class="grok-option" onclick="compareWithGrok(this, 'grok')">Grok</span>
-                    <span class="grok-option" onclick="compareWithGrok(this, 'simple')">Simple</span>
-                </div>
-            </div>
         </div>
         <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
     </div>
@@ -639,7 +661,6 @@ if (isset($conversation_messages['error'])) {
                 chatInput.style.height = 'auto';
                 chatInput.style.height = chatInput.scrollHeight + 'px';
 
-
                 let sendContent = inputText; // Default to user input
                 if (suggestionOverride && suggestionOverride.fullPrompt) {
                     sendContent = suggestionOverride.fullPrompt; // Use full template
@@ -647,8 +668,6 @@ if (isset($conversation_messages['error'])) {
                 }
 
                 document.querySelectorAll('.suggestions-section').forEach(sec => sec.style.display = 'none');
-
-
 
                 try {
                     // Send to proxy
@@ -687,13 +706,18 @@ if (isset($conversation_messages['error'])) {
         <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
         <div class="message-wrapper" data-assistant-id="${result.assistantMessageId || ''}" data-feedback-state="none" data-suggestions='${JSON.stringify(result.nextSuggestions || [])}'>
             <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
-            <div class="feedback-buttons">
-                <button class="feedback-btn thumbs-up" title="Helpful">
-                    <i class="fas fa-thumbs-up"></i>
-                </button>
-                <button class="feedback-btn thumbs-down" title="Not helpful">
-                    <i class="fas fa-thumbs-down"></i>
-                </button>
+            <div class="ai-actions">
+                <div class="feedback-buttons">
+                    <button class="feedback-btn thumbs-up" title="Helpful">
+                        <i class="fas fa-thumbs-up"></i>
+                    </button>
+                    <button class="feedback-btn thumbs-down" title="Not helpful">
+                        <i class="fas fa-thumbs-down"></i>
+                    </button>
+                </div>
+               <small class="compare-text">Compare with:</small>
+                                            <small class="change-provider" onclick="compareWithGrok(this, 'grok')">Grok</small>
+                                            <small class="change-provider" onclick="compareWithGrok(this, 'simple')">Simple</small>
             </div>
             ${suggestionsHtml}
         </div>
@@ -823,7 +847,7 @@ if (isset($conversation_messages['error'])) {
         document.querySelectorAll('.grok-option').forEach(opt => opt.style.backgroundColor = '');
         span.style.backgroundColor = 'rgba(0, 123, 255, 0.2)';
 
-        console.log(`Compare with ${type} Grok for user message`);
+        console.log(`Compare with ${type} Grok for message`);
         // Later: Trigger comparison API, e.g., fetch('/compare?type=' + type + '&messageId=...')
     }
 
