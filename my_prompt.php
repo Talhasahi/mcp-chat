@@ -492,6 +492,7 @@ if (isset($conversation_messages['error'])) {
                             $isUser = ($msg['role'] === 'user');
                             $avatarSrc = $isUser ? 'assets/images/author-avatar.png' : 'assets/images/favicon.png';
                             $roleClass = $isUser ? 'user' : 'ai';
+                            $assistantId = $isUser ? '' : ($msg['id'] ?? ''); // Assume 'id' is assistantMessageId for AI
                             ?>
                             <?php if ($isUser): ?>
                                 <div class="chat-message user">
@@ -511,7 +512,7 @@ if (isset($conversation_messages['error'])) {
                                 <!-- AI message: With feedback + suggestions section -->
                                 <div class="chat-message ai">
                                     <img src="<?php echo $avatarSrc; ?>" alt="AI Avatar" class="avatar">
-                                    <div class="message-wrapper">
+                                    <div class="message-wrapper" data-assistant-id="<?php echo htmlspecialchars($assistantId); ?>" data-feedback-state="none">
                                         <div class="message-content"><?php echo nl2br(htmlspecialchars($msg['content'])); ?></div>
                                         <div class="feedback-buttons">
                                             <button class="feedback-btn thumbs-up" title="Helpful">
@@ -563,6 +564,7 @@ if (isset($conversation_messages['error'])) {
     const conversationId = '<?php echo $conversationId ?? ''; ?>'; // From PHP
     const token = localStorage.getItem('token') || '<?php echo $_SESSION['token'] ?? ''; ?>';
     const chatProxyUrl = 'auth/chat.php'; // Proxy endpoint
+    const feedbackProxyUrl = 'auth/feedback.php'; // Feedback proxy
 
     // Auto-resize textarea on input (non-disruptive)
     document.addEventListener('DOMContentLoaded', () => {
@@ -649,8 +651,6 @@ if (isset($conversation_messages['error'])) {
 
                     const result = await response.json();
 
-                    console.log();
-
                     if (!response.ok) {
                         throw new Error(result.error || 'Failed to send message');
                     }
@@ -661,7 +661,7 @@ if (isset($conversation_messages['error'])) {
                     if (result.nextSuggestions && Array.isArray(result.nextSuggestions) && result.nextSuggestions.length > 0) {
                         suggestionsHtml = `
                             <div class="suggestions-section">
-                                <div class="suggestions-title">Try these:</div>
+                                <div class="suggestions-title">Suggestions:</div>
                                 <div class="suggestions-list">
                                     ${result.nextSuggestions.map(sugg => `<span class="suggestion-item" onclick="applySuggestion('${sugg.label}', '${sugg.key}')">${sugg.label}</span>`).join('')}
                                 </div>
@@ -671,7 +671,7 @@ if (isset($conversation_messages['error'])) {
                     const aiMessageHtml = `
                         <div class="chat-message ai">
                             <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                            <div class="message-wrapper">
+                            <div class="message-wrapper" data-assistant-id="${result.assistantMessageId || ''}" data-feedback-state="none">
                                 <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
                                 <div class="feedback-buttons">
                                     <button class="feedback-btn thumbs-up" title="Helpful">
@@ -706,22 +706,100 @@ if (isset($conversation_messages['error'])) {
             });
         }
 
-        // Feedback click handlers (UI only – connect API later)
-        document.addEventListener('click', (e) => {
+        // Feedback click handlers (full implementation with proxy)
+        document.addEventListener('click', async (e) => {
             if (e.target.closest('.feedback-btn')) {
+                e.preventDefault();
                 const btn = e.target.closest('.feedback-btn');
                 const isUp = btn.classList.contains('thumbs-up');
                 const messageWrapper = btn.closest('.message-wrapper');
+                const assistantMessageId = messageWrapper.dataset.assistantId;
+                if (!assistantMessageId) {
+                    console.error('No assistantMessageId found');
+                    return;
+                }
 
-                // Remove selected from siblings
+                const currentState = messageWrapper.dataset.feedbackState || 'none'; // 'like', 'dislike', 'none'
+                let newState = 'none';
+
+                // Toggle logic: Click same button again to clear; switch if different
+                if (currentState === 'like' && isUp) {
+                    newState = 'none';
+                } else if (currentState === 'dislike' && !isUp) {
+                    newState = 'none';
+                } else if (isUp) {
+                    newState = 'like';
+                } else {
+                    newState = 'dislike';
+                }
+
+                // Optimistic UI update
                 const siblings = messageWrapper.querySelectorAll('.feedback-btn');
                 siblings.forEach(sib => sib.classList.remove('selected'));
+                if (newState !== 'none') {
+                    btn.classList.add('selected');
+                }
+                messageWrapper.dataset.feedbackState = newState;
 
-                // Add selected to this
-                btn.classList.add('selected');
+                // Auto-generate reason/comment (intelligent defaults; expand with scenarios like content analysis later)
+                let reason = null;
+                let comment = null;
+                if (newState === 'like') {
+                    reason = 'helpful';
+                    comment = 'Concise and accurate.';
+                } else if (newState === 'dislike') {
+                    reason = 'incorrect';
+                    comment = 'Got the date wrong.'; // Or smarter: analyze msg content for errors
+                }
+                // For 'none', send empty payload to clear
 
-                // Stub: console.log for now
-                console.log(`Feedback: ${isUp ? 'Up' : 'Down'} for message`);
+                // API call via proxy
+                try {
+                    const payload = {
+                        assistantMessageId,
+                        reaction: newState
+                    };
+                    if (newState !== 'none') {
+                        payload.reason = reason;
+                        payload.comment = comment;
+                    }
+
+                    const response = await fetch(feedbackProxyUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Feedback failed');
+                    }
+
+                    console.log(`Feedback sent: ${newState}`);
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000, // Auto-dismiss after 3s
+                        title: 'Thanks for your feedback!',
+                        icon: 'success',
+                    });
+                    // Optional: Show success toast or update UI (e.g., hide buttons after clear)
+
+                } catch (error) {
+                    console.error('Feedback error:', error);
+                    // Revert UI on failure
+                    siblings.forEach(sib => sib.classList.remove('selected'));
+                    if (currentState !== 'none') {
+                        const prevBtn = messageWrapper.querySelector(`.feedback-btn.${currentState === 'like' ? 'thumbs-up' : 'thumbs-down'}`);
+                        if (prevBtn) prevBtn.classList.add('selected');
+                    }
+                    messageWrapper.dataset.feedbackState = currentState;
+                    alert('Failed to send feedback: ' + error.message);
+                }
             }
         });
     });
@@ -735,12 +813,16 @@ if (isset($conversation_messages['error'])) {
         // Later: Trigger comparison API, e.g., fetch('/compare?type=' + type + '&messageId=...')
     }
 
-    // Stub for applying suggestions (UI only – connect to new chat call later)
     function applySuggestion(label, key) {
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.querySelector('.send-btn');
+        if (chatInput && sendBtn) {
+            chatInput.value = label; // Assign the suggestion label as the message
+            chatInput.style.height = 'auto';
+            chatInput.style.height = chatInput.scrollHeight + 'px'; // Auto-resize
+            sendBtn.click(); // Auto-trigger send
+        }
         console.log(`Applying suggestion: ${label} (${key})`);
-        // Later: e.g., populate chatInput with template + content, then send
-        // Example: chatInput.value = suggestion.template.replace('{{TEXT}}', previousContent);
-        // Then sendBtn.click();
     }
 </script>
 
