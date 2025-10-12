@@ -2,8 +2,7 @@
 // mcp-tools.php
 ?>
 
-
-<button class="tool-btn"><i class="fas fa-tools" onclick="toggleToolsDropdown()"></i></button>
+<button class="tool-btn"><i class="fas fa-tools attachment" onclick="toggleToolsDropdown()"></i></button>
 <style>
     .tools-dropdown {
         position: absolute;
@@ -152,8 +151,8 @@
         Energy Tools
     </div>
     <div class="sub-tools-dropdown" id="sub-energy">
-        <?php if (isset($_SESSION['energy_mcp_tools']['tools'])): ?>
-            <?php foreach ($_SESSION['energy_mcp_tools']['tools'] as $tool): ?>
+        <?php if (isset($_SESSION['energy_mcp_tools'])): ?>
+            <?php foreach ($_SESSION['energy_mcp_tools'] as $tool): ?>
                 <div class="sub-tools-item" title="<?= htmlspecialchars($tool['description'] ?? '') ?>" onclick="selectSubTool('Energy', '<?= htmlspecialchars($tool['title'] ?? '') ?>')">
                     <?= htmlspecialchars($tool['title'] ?? '') ?>
                 </div>
@@ -167,8 +166,8 @@
     </div>
 
     <div class="sub-tools-dropdown" id="sub-brevo">
-        <?php if (isset($_SESSION['brevo_mcp_tools']['tools'])): ?>
-            <?php foreach ($_SESSION['brevo_mcp_tools']['tools'] as $tool): ?>
+        <?php if (isset($_SESSION['brevo_mcp_tools'])): ?>
+            <?php foreach ($_SESSION['brevo_mcp_tools'] as $tool): ?>
                 <div class="sub-tools-item" title="<?= htmlspecialchars($tool['description'] ?? '') ?>" onclick="selectSubTool('Brevo', '<?= htmlspecialchars($tool['title'] ?? '') ?>')">
                     <?= htmlspecialchars($tool['title'] ?? '') ?>
                 </div>
@@ -181,8 +180,8 @@
         XML Tools
     </div>
     <div class="sub-tools-dropdown" id="sub-xml">
-        <?php if (isset($_SESSION['xml_mcp_tools']['tools'])): ?>
-            <?php foreach ($_SESSION['xml_mcp_tools']['tools'] as $tool): ?>
+        <?php if (isset($_SESSION['xml_mcp_tools'])): ?>
+            <?php foreach ($_SESSION['xml_mcp_tools'] as $tool): ?>
                 <div class="sub-tools-item" title="<?= htmlspecialchars($tool['description'] ?? '') ?>" onclick="selectSubTool('XML', '<?= htmlspecialchars($tool['title'] ?? '') ?>')">
                     <?= htmlspecialchars($tool['title'] ?? '') ?>
                 </div>
@@ -192,9 +191,9 @@
 </div>
 
 <script>
-    const energyTools = <?= json_encode($_SESSION['energy_mcp_tools']['tools'] ?? []) ?>;
-    const brevoTools = <?= json_encode($_SESSION['brevo_mcp_tools']['tools'] ?? []) ?>;
-    const xmlTools = <?= json_encode($_SESSION['xml_mcp_tools']['tools'] ?? []) ?>;
+    const energyTools = <?= json_encode($_SESSION['energy_mcp_tools'] ?? []) ?>;
+    const brevoTools = <?= json_encode($_SESSION['brevo_mcp_tools'] ?? []) ?>;
+    const xmlTools = <?= json_encode($_SESSION['xml_mcp_tools'] ?? []) ?>;
 
     // Tool lookup function
     function getToolByCategoryAndTitle(category, title) {
