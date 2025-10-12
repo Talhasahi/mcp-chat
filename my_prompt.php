@@ -590,409 +590,42 @@ if (isset($conversation_messages['error'])) {
         </div>
     </div>
 </div>
-
 <script>
     const conversationId = '<?php echo $conversationId ?? ''; ?>'; // From PHP
     const token = localStorage.getItem('token') || '<?php echo $_SESSION['token'] ?? ''; ?>';
     const chatProxyUrl = 'auth/chat.php';
     const feedbackProxyUrl = 'auth/feedback.php';
+    const forceProxyUrl = 'auth/force_provider_chat.php';
     let suggestionOverride = null;
     let lastSentContent = '';
     let lastInputText = '';
     const sendBtn = document.querySelector('.send-btn');
 
-    // Auto-resize textarea on input (non-disruptive)
-    document.addEventListener('DOMContentLoaded', () => {
-        const chatInput = document.getElementById('chatInput');
-        const chatContainer = document.getElementById('chatContainer');
-
-        if (chatInput) {
-            // Initial height set
-            chatInput.style.height = 'auto';
-            chatInput.style.height = chatInput.scrollHeight + 'px';
-
-            chatInput.addEventListener('input', function() {
-                this.style.height = 'auto'; // Reset
-                const newHeight = Math.min(this.scrollHeight, 120); // Cap at 120px
-                this.style.height = newHeight + 'px';
-            });
-
-            // Optional: Enter to send (without Shift for new line)
-            chatInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    document.querySelector('.send-btn').click();
-                }
-            });
-        }
-
-        // Handle send button click
-
-        if (sendBtn && chatInput) {
-            sendBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-
-                let inputText = chatInput.value.trim();
-                if (!inputText) {
-                    alert('Please enter a message!');
-                    return;
-                }
-
-                if (!conversationId || !token) {
-                    alert('Please select a conversation and log in.');
-                    return;
-                }
-
-                // Disable send and show loading
-                sendBtn.disabled = true;
-                sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-                // Add user message to UI immediately
-                const userMessageHtml = `
-    <div class="chat-message user">
-        <div class="message-wrapper">
-            <div class="message-content">${inputText.replace(/\n/g, '<br>')}</div>
-        </div>
-        <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-    </div>
-`;
-                chatContainer.innerHTML += userMessageHtml;
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-
-                // Clear input
-                chatInput.value = '';
-                chatInput.style.height = 'auto';
-                chatInput.style.height = chatInput.scrollHeight + 'px';
-                lastInputText = inputText;
-                let sendContent = inputText;
-                if (suggestionOverride && suggestionOverride.fullPrompt) {
-                    sendContent = suggestionOverride.fullPrompt; // Use full template
-                    suggestionOverride = null; // Clear after use
-                }
-                lastSentContent = sendContent;
-
-                document.querySelectorAll('.suggestions-section').forEach(sec => sec.style.display = 'none');
-                document.querySelectorAll('.compare-text').forEach(sec => sec.style.display = 'none');
-                document.querySelectorAll('.change-provider').forEach(sec => sec.style.display = 'none');
-
-                try {
-                    // Send to proxy
-                    const response = await fetch(chatProxyUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            conversationId: conversationId,
-                            content: sendContent
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(result.error || 'Failed to send message');
-                    }
-
-                    // Append AI response (use result.content as per your example JSON)
-                    const aiContent = result.content || 'AI response received.';
-                    let suggestionsHtml = '';
-                    if (result.nextSuggestions && Array.isArray(result.nextSuggestions) && result.nextSuggestions.length > 0) {
-                        suggestionsHtml = `
-                            <div class="suggestions-section">
-                                <div class="suggestions-title">Suggestions:</div>
-                                <div class="suggestions-list">
-                                  ${result.nextSuggestions.map(sugg => `<span class="suggestion-item" onclick="applySuggestion('${sugg.key}')">${sugg.label}</span>`).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-                    const enabledProviders = <?php echo json_encode($_SESSION['enabledProviders'] ?? []); ?>;
-                    const currentProvider = result.provider || '';
-                    const otherProviders = enabledProviders.filter(p => p !== currentProvider);
-                    let compareOptionsHtml = '';
-                    if (otherProviders.length > 0) {
-                        compareOptionsHtml = `
-        <small class="compare-text">Compare with:</small>
-        ${otherProviders.map(provider => 
-            `<small class="change-provider" onclick="compareWithGrok(this, '${provider}')">${provider.charAt(0).toUpperCase() + provider.slice(1)}</small>`
-        ).join('')}
-    `;
-                    }
-
-
-                    const aiMessageHtml = `
-    <div class="chat-message ai">
-        <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-        <div class="message-wrapper" data-assistant-id="${result.assistantMessageId || ''}" data-feedback-state="none" data-suggestions='${JSON.stringify(result.nextSuggestions || [])}'>
-            <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
-            <div class="ai-actions">
-                <div class="feedback-buttons">
-                    <button class="feedback-btn thumbs-up" title="Helpful">
-                        <i class="fas fa-thumbs-up"></i>
-                    </button>
-                    <button class="feedback-btn thumbs-down" title="Not helpful">
-                        <i class="fas fa-thumbs-down"></i>
-                    </button>
-                </div>
-                ${compareOptionsHtml}
-            </div>
-            ${suggestionsHtml}
-        </div>
-    </div>
-`;
-
-                    chatContainer.innerHTML += aiMessageHtml;
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-
-                } catch (error) {
-                    console.error('Error sending message:', error);
-                    const errorHtml = `
-                        <div class="chat-message ai">
-                            <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                            <div class="message-content" style="color: red;">Error: ${error.message}</div>
-                        </div>
-                    `;
-                    chatContainer.innerHTML += errorHtml;
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                } finally {
-                    // Re-enable send
-                    sendBtn.disabled = false;
-                    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-                }
-            });
-        }
-
-        // Feedback click handlers (full implementation with proxy)
-        document.addEventListener('click', async (e) => {
-            if (e.target.closest('.feedback-btn')) {
-                e.preventDefault();
-                const btn = e.target.closest('.feedback-btn');
-                const isUp = btn.classList.contains('thumbs-up');
-                const messageWrapper = btn.closest('.message-wrapper');
-                const assistantMessageId = messageWrapper.dataset.assistantId;
-                if (!assistantMessageId) {
-                    console.error('No assistantMessageId found');
-                    return;
-                }
-
-                const currentState = messageWrapper.dataset.feedbackState || 'none'; // 'like', 'dislike', 'none'
-                let newState = 'none';
-
-                // Toggle logic: Click same button again to clear; switch if different
-                if (currentState === 'like' && isUp) {
-                    newState = 'none';
-                } else if (currentState === 'dislike' && !isUp) {
-                    newState = 'none';
-                } else if (isUp) {
-                    newState = 'like';
-                } else {
-                    newState = 'dislike';
-                }
-
-                // Optimistic UI update
-                const siblings = messageWrapper.querySelectorAll('.feedback-btn');
-                siblings.forEach(sib => sib.classList.remove('selected'));
-                if (newState !== 'none') {
-                    btn.classList.add('selected');
-                }
-                messageWrapper.dataset.feedbackState = newState;
-
-                // Auto-generate reason/comment (intelligent defaults; expand with scenarios like content analysis later)
-                let reason = null;
-                let comment = null;
-                if (newState === 'like') {
-                    reason = 'helpful';
-                    comment = 'Concise and accurate.';
-                } else if (newState === 'dislike') {
-                    reason = 'incorrect';
-                    comment = 'Got the date wrong.'; // Or smarter: analyze msg content for errors
-                }
-                // For 'none', send empty payload to clear
-
-                // API call via proxy
-                try {
-                    const payload = {
-                        assistantMessageId,
-                        reaction: newState
-                    };
-                    if (newState !== 'none') {
-                        payload.reason = reason;
-                        payload.comment = comment;
-                    }
-
-                    const response = await fetch(feedbackProxyUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(result.error || 'Feedback failed');
-                    }
-
-                    console.log(`Feedback sent: ${newState}`);
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000, // Auto-dismiss after 3s
-                        title: 'Thanks for your feedback!',
-                        icon: 'success',
-                    });
-                    // Optional: Show success toast or update UI (e.g., hide buttons after clear)
-
-                } catch (error) {
-                    console.error('Feedback error:', error);
-                    // Revert UI on failure
-                    siblings.forEach(sib => sib.classList.remove('selected'));
-                    if (currentState !== 'none') {
-                        const prevBtn = messageWrapper.querySelector(`.feedback-btn.${currentState === 'like' ? 'thumbs-up' : 'thumbs-down'}`);
-                        if (prevBtn) prevBtn.classList.add('selected');
-                    }
-                    messageWrapper.dataset.feedbackState = currentState;
-                    alert('Failed to send feedback: ' + error.message);
-                }
-            }
-        });
-    });
-
-
-
-    function applySuggestion(key) {
-        const clickedItem = event.target; // From onclick event
-        const messageWrapper = clickedItem.closest('.message-wrapper');
-        if (!messageWrapper) {
-            console.error('No message wrapper found');
-            return;
-        }
-
-        // Get previous AI content (plain text)
-        const prevContentEl = messageWrapper.querySelector('.message-content');
-        if (!prevContentEl) {
-            console.error('No previous content found');
-            return;
-        }
-        const prevText = prevContentEl.textContent.trim(); // Strip HTML for template
-
-        // Get suggestions array from data
-        const suggestionsStr = messageWrapper.dataset.suggestions;
-        const suggestions = suggestionsStr ? JSON.parse(suggestionsStr) : [];
-        const sugg = suggestions.find(s => s.key === key);
-        if (!sugg || !sugg.template) {
-            console.error('Suggestion not found or missing template:', key);
-            return;
-        }
-
-        // Build full prompt: Replace {{TEXT}} with prevText; hardcode {{LANG}} to 'German' if present
-        let fullPrompt = sugg.template;
-        fullPrompt = fullPrompt.replace('{{TEXT}}', prevText);
-        if (fullPrompt.includes('{{LANG}}')) {
-            fullPrompt = fullPrompt.replace('{{LANG}}', 'German');
-        }
-
-        // Set label in input for user view, but override payload for send
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.querySelector('.send-btn');
-        if (chatInput && sendBtn) {
-            chatInput.value = sugg.label; // Show friendly label
-            chatInput.style.height = 'auto';
-            chatInput.style.height = chatInput.scrollHeight + 'px'; // Auto-resize
-            suggestionOverride = {
-                fullPrompt
-            }; // Flag for send handler
-            sendBtn.click(); // Auto-trigger send
-        }
-        console.log(`Applying suggestion: ${key} with full prompt`);
-    }
-
-    function compareWithGrok(span, provider) {
-        document.querySelectorAll('.suggestions-section').forEach(sec => sec.style.display = 'none');
-        document.querySelectorAll('.compare-text').forEach(sec => sec.style.display = 'none');
-        document.querySelectorAll('.change-provider').forEach(sec => sec.style.display = 'none');
-        if (!lastSentContent) {
-            alert('No recent message to compare.');
-            return;
-        }
-
-
-
-        // Append new user message to UI using lastInputText
+    // Helper: Append user message to chat container
+    function appendUserMessage(content) {
         const chatContainer = document.getElementById('chatContainer');
         const userMessageHtml = `
-        <div class="chat-message user">
-            <div class="message-wrapper">
-                <div class="message-content">${lastInputText.replace(/\n/g, '<br>')}</div>
+            <div class="chat-message user">
+                <div class="message-wrapper">
+                    <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+                </div>
+                <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
             </div>
-            <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
-        </div>
-    `;
+        `;
         chatContainer.insertAdjacentHTML('beforeend', userMessageHtml);
         chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-        // Disable send and show loading (same as send button)
-        const sendBtn = document.querySelector('.send-btn');
-        sendBtn.disabled = true;
-        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    // Helper: Append AI message to chat container
+    function appendAIMessage(aiContent, assistantMessageId, nextSuggestions, provider) {
+        const chatContainer = document.getElementById('chatContainer');
+        const suggestionsHtml = buildSuggestionsHtml(nextSuggestions);
+        const compareOptionsHtml = buildCompareOptionsHtml(provider);
 
-        // Call the force provider proxy (same approach as chat.php: send content, build messages in backend)
-        const forceProxyUrl = 'auth/force_provider_chat.php';
-        fetch(forceProxyUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    provider: provider,
-                    content: lastSentContent
-                })
-            })
-            .then(response => response.json())
-            .then(result => {
-                // Re-enable send button
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-
-                if (result.error) {
-                    console.error('Force provider error:', result.error);
-                    alert('Failed to compare: ' + result.error);
-                    return;
-                }
-
-                // Append AI response (same as normal chat response)
-                const aiContent = result.content || 'AI response received.';
-                let suggestionsHtml = '';
-                if (result.nextSuggestions && Array.isArray(result.nextSuggestions) && result.nextSuggestions.length > 0) {
-                    suggestionsHtml = `
-                <div class="suggestions-section">
-                    <div class="suggestions-title">Suggestions:</div>
-                    <div class="suggestions-list">
-                      ${result.nextSuggestions.map(sugg => `<span class="suggestion-item" onclick="applySuggestion('${sugg.key}')">${sugg.label}</span>`).join('')}
-                    </div>
-                </div>
-            `;
-                }
-                const enabledProviders = <?php echo json_encode($_SESSION['enabledProviders'] ?? []); ?>;
-                const currentProvider = result.provider || '';
-                const otherProviders = enabledProviders.filter(p => p !== currentProvider);
-                let compareOptionsHtml = '';
-                if (otherProviders.length > 0) {
-                    compareOptionsHtml = `
-                <small class="compare-text">Compare with:</small>
-                ${otherProviders.map(p => 
-                    `<small class="change-provider" onclick="compareWithGrok(this, '${p}')">${p.charAt(0).toUpperCase() + p.slice(1)}</small>`
-                ).join('')}
-            `;
-                }
-
-                const aiMessageHtml = `
+        const aiMessageHtml = `
             <div class="chat-message ai">
                 <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
-                <div class="message-wrapper" data-assistant-id="${result.assistantMessageId || ''}" data-feedback-state="none" data-suggestions='${JSON.stringify(result.nextSuggestions || [])}'>
+                <div class="message-wrapper" data-assistant-id="${assistantMessageId || ''}" data-feedback-state="none" data-suggestions='${JSON.stringify(nextSuggestions || [])}'>
                     <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
                     <div class="ai-actions">
                         <div class="feedback-buttons">
@@ -1009,17 +642,354 @@ if (isset($conversation_messages['error'])) {
                 </div>
             </div>
         `;
+        chatContainer.insertAdjacentHTML('beforeend', aiMessageHtml);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-                chatContainer.insertAdjacentHTML('beforeend', aiMessageHtml);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Helper: Build suggestions HTML
+    function buildSuggestionsHtml(nextSuggestions) {
+        if (!nextSuggestions || !Array.isArray(nextSuggestions) || nextSuggestions.length === 0) {
+            return '';
+        }
+        return `
+            <div class="suggestions-section">
+                <div class="suggestions-title">Suggestions:</div>
+                <div class="suggestions-list">
+                    ${nextSuggestions.map(sugg => `<span class="suggestion-item" onclick="applySuggestion('${sugg.key}')">${sugg.label}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    }
 
-                console.log('Force provider result:', result);
+    // Helper: Build compare options HTML
+    function buildCompareOptionsHtml(currentProvider) {
+        const enabledProviders = <?php echo json_encode($_SESSION['enabledProviders'] ?? []); ?>;
+        const otherProviders = enabledProviders.filter(p => p !== currentProvider);
+        if (otherProviders.length === 0) {
+            return '';
+        }
+        return `
+            <small class="compare-text">Compare with:</small>
+            ${otherProviders.map(provider => 
+                `<small class="change-provider" onclick="compareWithProvider('${provider}')">${provider.charAt(0).toUpperCase() + provider.slice(1)}</small>`
+            ).join('')}
+        `;
+    }
+
+    // Helper: Hide UI elements (suggestions, compare)
+    function hideUIElements() {
+        document.querySelectorAll('.suggestions-section').forEach(sec => sec.style.display = 'none');
+        document.querySelectorAll('.compare-text').forEach(sec => sec.style.display = 'none');
+        document.querySelectorAll('.change-provider').forEach(sec => sec.style.display = 'none');
+    }
+
+    // Helper: Set loading state on send button
+    function setLoadingState(loading) {
+        if (loading) {
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        } else {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        }
+    }
+
+    // Helper: Reset textarea height
+    function resetTextareaHeight() {
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = chatInput.scrollHeight + 'px';
+        }
+    }
+
+    // Helper: Send chat request (normal or force provider)
+    async function sendChatRequest(content, forceProvider = null) {
+        const url = forceProvider ? forceProxyUrl : chatProxyUrl;
+        const body = forceProvider ? {
+            provider: forceProvider,
+            content
+        } : {
+            conversationId,
+            content
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to send message');
+        }
+        return result;
+    }
+
+    // Main: Auto-resize textarea on input
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatInput = document.getElementById('chatInput');
+        const chatContainer = document.getElementById('chatContainer');
+
+        if (chatInput) {
+            // Initial height set
+            resetTextareaHeight();
+
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                const newHeight = Math.min(this.scrollHeight, 120);
+                this.style.height = newHeight + 'px';
+            });
+
+            // Enter to send (without Shift for new line)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendBtn.click();
+                }
+            });
+        }
+
+        // Send button handler
+        if (sendBtn && chatInput) {
+            sendBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const inputText = chatInput.value.trim();
+                if (!inputText) {
+                    alert('Please enter a message!');
+                    return;
+                }
+
+                if (!conversationId || !token) {
+                    alert('Please select a conversation and log in.');
+                    return;
+                }
+
+                // Prepare content
+                let sendContent = inputText;
+                if (suggestionOverride && suggestionOverride.fullPrompt) {
+                    sendContent = suggestionOverride.fullPrompt;
+                    suggestionOverride = null;
+                }
+                lastSentContent = sendContent;
+                lastInputText = inputText;
+
+                hideUIElements();
+                setLoadingState(true);
+                appendUserMessage(inputText);
+                chatInput.value = '';
+                resetTextareaHeight();
+
+                try {
+                    const result = await sendChatRequest(sendContent);
+                    const {
+                        content: aiContent,
+                        assistantMessageId,
+                        nextSuggestions,
+                        provider
+                    } = result;
+                    appendAIMessage(aiContent || 'AI response received.', assistantMessageId, nextSuggestions, provider);
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    const errorHtml = `
+                        <div class="chat-message ai">
+                            <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
+                            <div class="message-content" style="color: red;">Error: ${error.message}</div>
+                        </div>
+                    `;
+                    chatContainer.insertAdjacentHTML('beforeend', errorHtml);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                } finally {
+                    setLoadingState(false);
+                }
+            });
+        }
+
+        // Feedback handler
+        document.addEventListener('click', async (e) => {
+            if (e.target.closest('.feedback-btn')) {
+                e.preventDefault();
+                const btn = e.target.closest('.feedback-btn');
+                const isUp = btn.classList.contains('thumbs-up');
+                const messageWrapper = btn.closest('.message-wrapper');
+                const assistantMessageId = messageWrapper.dataset.assistantId;
+
+                if (!assistantMessageId) {
+                    console.error('No assistantMessageId found');
+                    return;
+                }
+
+                const currentState = messageWrapper.dataset.feedbackState || 'none';
+                let newState = determineNewFeedbackState(currentState, isUp);
+
+                // Update UI optimistically
+                updateFeedbackUI(messageWrapper, newState, btn);
+
+                // Prepare payload
+                const payload = {
+                    assistantMessageId,
+                    reaction: newState
+                };
+                const {
+                    reason,
+                    comment
+                } = getFeedbackDetails(newState);
+                if (newState !== 'none') {
+                    payload.reason = reason;
+                    payload.comment = comment;
+                }
+
+                try {
+                    const response = await fetch(feedbackProxyUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Feedback failed');
+                    }
+                    console.log(`Feedback sent: ${newState}`);
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        title: 'Thanks for your feedback!',
+                        icon: 'success',
+                    });
+                } catch (error) {
+                    console.error('Feedback error:', error);
+                    // Revert UI
+                    revertFeedbackUI(messageWrapper, currentState);
+                    alert('Failed to send feedback: ' + error.message);
+                }
+            }
+        });
+    });
+
+    // Helper: Determine new feedback state
+    function determineNewFeedbackState(currentState, isUp) {
+        if (currentState === 'like' && isUp) return 'none';
+        if (currentState === 'dislike' && !isUp) return 'none';
+        return isUp ? 'like' : 'dislike';
+    }
+
+    // Helper: Update feedback UI
+    function updateFeedbackUI(messageWrapper, newState, btn) {
+        const siblings = messageWrapper.querySelectorAll('.feedback-btn');
+        siblings.forEach(sib => sib.classList.remove('selected'));
+        if (newState !== 'none') {
+            btn.classList.add('selected');
+        }
+        messageWrapper.dataset.feedbackState = newState;
+    }
+
+    // Helper: Revert feedback UI
+    function revertFeedbackUI(messageWrapper, currentState) {
+        const siblings = messageWrapper.querySelectorAll('.feedback-btn');
+        siblings.forEach(sib => sib.classList.remove('selected'));
+        if (currentState !== 'none') {
+            const prevBtn = messageWrapper.querySelector(`.feedback-btn.${currentState === 'like' ? 'thumbs-up' : 'thumbs-down'}`);
+            if (prevBtn) prevBtn.classList.add('selected');
+        }
+        messageWrapper.dataset.feedbackState = currentState;
+    }
+
+    // Helper: Get feedback details (reason/comment)
+    function getFeedbackDetails(state) {
+        if (state === 'like') {
+            return {
+                reason: 'helpful',
+                comment: 'Concise and accurate.'
+            };
+        } else if (state === 'dislike') {
+            return {
+                reason: 'incorrect',
+                comment: 'Got the date wrong.'
+            };
+        }
+        return {
+            reason: null,
+            comment: null
+        };
+    }
+
+    // Apply suggestion function
+    function applySuggestion(key) {
+        const clickedItem = event.target;
+        const messageWrapper = clickedItem.closest('.message-wrapper');
+        if (!messageWrapper) {
+            console.error('No message wrapper found');
+            return;
+        }
+
+        const prevContentEl = messageWrapper.querySelector('.message-content');
+        if (!prevContentEl) {
+            console.error('No previous content found');
+            return;
+        }
+        const prevText = prevContentEl.textContent.trim();
+
+        const suggestionsStr = messageWrapper.dataset.suggestions;
+        const suggestions = suggestionsStr ? JSON.parse(suggestionsStr) : [];
+        const sugg = suggestions.find(s => s.key === key);
+        if (!sugg || !sugg.template) {
+            console.error('Suggestion not found or missing template:', key);
+            return;
+        }
+
+        let fullPrompt = sugg.template.replace('{{TEXT}}', prevText);
+        if (fullPrompt.includes('{{LANG}}')) {
+            fullPrompt = fullPrompt.replace('{{LANG}}', 'German');
+        }
+
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.value = sugg.label;
+            resetTextareaHeight();
+            suggestionOverride = {
+                fullPrompt
+            };
+            sendBtn.click();
+        }
+        console.log(`Applying suggestion: ${key} with full prompt`);
+    }
+
+    // Compare with provider function (renamed for clarity)
+    function compareWithProvider(provider) {
+        if (!lastSentContent) {
+            alert('No recent message to compare.');
+            return;
+        }
+
+        hideUIElements();
+        setLoadingState(true);
+        appendUserMessage(lastInputText);
+
+        sendChatRequest(lastSentContent, provider)
+            .then(result => {
+                setLoadingState(false);
+                const {
+                    content: aiContent,
+                    assistantMessageId,
+                    nextSuggestions,
+                    provider: currentProvider
+                } = result;
+                if (result.error) {
+                    alert('Failed to compare: ' + result.error);
+                    return;
+                }
+                appendAIMessage(aiContent || 'AI response received.', assistantMessageId, nextSuggestions, currentProvider);
             })
             .catch(error => {
+                setLoadingState(false);
                 console.error('Force provider error:', error);
-                // Re-enable send button
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
                 alert('Failed to compare: ' + error.message);
             });
     }
