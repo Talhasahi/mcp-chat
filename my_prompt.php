@@ -599,6 +599,7 @@ if (isset($conversation_messages['error'])) {
     let suggestionOverride = null;
     let lastSentContent = '';
     let lastInputText = '';
+    const sendBtn = document.querySelector('.send-btn');
 
     // Auto-resize textarea on input (non-disruptive)
     document.addEventListener('DOMContentLoaded', () => {
@@ -626,7 +627,7 @@ if (isset($conversation_messages['error'])) {
         }
 
         // Handle send button click
-        const sendBtn = document.querySelector('.send-btn');
+
         if (sendBtn && chatInput) {
             sendBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -671,6 +672,8 @@ if (isset($conversation_messages['error'])) {
                 lastSentContent = sendContent;
 
                 document.querySelectorAll('.suggestions-section').forEach(sec => sec.style.display = 'none');
+                document.querySelectorAll('.compare-text').forEach(sec => sec.style.display = 'none');
+                document.querySelectorAll('.change-provider').forEach(sec => sec.style.display = 'none');
 
                 try {
                     // Send to proxy
@@ -858,14 +861,7 @@ if (isset($conversation_messages['error'])) {
         });
     });
 
-    function compareWithGrok(span, type) {
-        // Stub: Highlight selected for now
-        document.querySelectorAll('.grok-option').forEach(opt => opt.style.backgroundColor = '');
-        span.style.backgroundColor = 'rgba(0, 123, 255, 0.2)';
 
-        console.log(`Compare with ${type} Grok for message`);
-        // Later: Trigger comparison API, e.g., fetch('/compare?type=' + type + '&messageId=...')
-    }
 
     function applySuggestion(key) {
         const clickedItem = event.target; // From onclick event
@@ -912,6 +908,120 @@ if (isset($conversation_messages['error'])) {
             sendBtn.click(); // Auto-trigger send
         }
         console.log(`Applying suggestion: ${key} with full prompt`);
+    }
+
+    function compareWithGrok(span, provider) {
+        document.querySelectorAll('.suggestions-section').forEach(sec => sec.style.display = 'none');
+        document.querySelectorAll('.compare-text').forEach(sec => sec.style.display = 'none');
+        document.querySelectorAll('.change-provider').forEach(sec => sec.style.display = 'none');
+        if (!lastSentContent) {
+            alert('No recent message to compare.');
+            return;
+        }
+
+
+
+        // Append new user message to UI using lastInputText
+        const chatContainer = document.getElementById('chatContainer');
+        const userMessageHtml = `
+        <div class="chat-message user">
+            <div class="message-wrapper">
+                <div class="message-content">${lastInputText.replace(/\n/g, '<br>')}</div>
+            </div>
+            <img src="assets/images/author-avatar.png" alt="User Avatar" class="avatar">
+        </div>
+    `;
+        chatContainer.insertAdjacentHTML('beforeend', userMessageHtml);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        // Disable send and show loading (same as send button)
+        const sendBtn = document.querySelector('.send-btn');
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        // Call the force provider proxy (same approach as chat.php: send content, build messages in backend)
+        const forceProxyUrl = 'auth/force_provider_chat.php';
+        fetch(forceProxyUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    provider: provider,
+                    content: lastSentContent
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                // Re-enable send button
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+
+                if (result.error) {
+                    console.error('Force provider error:', result.error);
+                    alert('Failed to compare: ' + result.error);
+                    return;
+                }
+
+                // Append AI response (same as normal chat response)
+                const aiContent = result.content || 'AI response received.';
+                let suggestionsHtml = '';
+                if (result.nextSuggestions && Array.isArray(result.nextSuggestions) && result.nextSuggestions.length > 0) {
+                    suggestionsHtml = `
+                <div class="suggestions-section">
+                    <div class="suggestions-title">Suggestions:</div>
+                    <div class="suggestions-list">
+                      ${result.nextSuggestions.map(sugg => `<span class="suggestion-item" onclick="applySuggestion('${sugg.key}')">${sugg.label}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+                }
+                const enabledProviders = <?php echo json_encode($_SESSION['enabledProviders'] ?? []); ?>;
+                const currentProvider = result.provider || '';
+                const otherProviders = enabledProviders.filter(p => p !== currentProvider);
+                let compareOptionsHtml = '';
+                if (otherProviders.length > 0) {
+                    compareOptionsHtml = `
+                <small class="compare-text">Compare with:</small>
+                ${otherProviders.map(p => 
+                    `<small class="change-provider" onclick="compareWithGrok(this, '${p}')">${p.charAt(0).toUpperCase() + p.slice(1)}</small>`
+                ).join('')}
+            `;
+                }
+
+                const aiMessageHtml = `
+            <div class="chat-message ai">
+                <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
+                <div class="message-wrapper" data-assistant-id="${result.assistantMessageId || ''}" data-feedback-state="none" data-suggestions='${JSON.stringify(result.nextSuggestions || [])}'>
+                    <div class="message-content">${aiContent.replace(/\n/g, '<br>')}</div>
+                    <div class="ai-actions">
+                        <div class="feedback-buttons">
+                            <button class="feedback-btn thumbs-up" title="Helpful">
+                                <i class="fas fa-thumbs-up"></i>
+                            </button>
+                            <button class="feedback-btn thumbs-down" title="Not helpful">
+                                <i class="fas fa-thumbs-down"></i>
+                            </button>
+                        </div>
+                        ${compareOptionsHtml}
+                    </div>
+                    ${suggestionsHtml}
+                </div>
+            </div>
+        `;
+
+                chatContainer.insertAdjacentHTML('beforeend', aiMessageHtml);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                console.log('Force provider result:', result);
+            })
+            .catch(error => {
+                console.error('Force provider error:', error);
+                // Re-enable send button
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                alert('Failed to compare: ' + error.message);
+            });
     }
 </script>
 

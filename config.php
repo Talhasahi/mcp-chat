@@ -418,3 +418,34 @@ function get_default_suggestions($limit = 8)
     $data = json_decode($raw, true);
     return $data['suggestions'] ?? [];
 }
+function force_provider_message($provider, $message)
+{
+    start_session();
+    $token = $_SESSION['token'] ?? '';
+    if (!$token) {
+        return ['error' => 'No authentication token – please log in again.'];
+    }
+
+    $data = [
+        'provider' => $provider,
+        'messages' => [
+            [
+                'role' => 'user',
+                'content' => $message
+            ]
+        ]
+    ];
+
+    $endpoint = '/chat';
+    $result = call_authenticated_api($endpoint, $data, 'POST');
+    $response = $result['response'];
+    $http_code = $result['code'];
+
+    if (!$response || ($http_code !== 200 && $http_code !== 201)) {
+        $decoded = json_decode($response, true);
+        return ['error' => $decoded['error'] ?? 'Failed to send message'];
+    }
+
+    $decoded = json_decode($response, true);
+    return $decoded ?? ['success' => true]; // Returns full response incl. content
+}
