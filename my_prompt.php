@@ -548,9 +548,9 @@ if (isset($conversation_messages['error'])) {
                                                     <i class="fas fa-thumbs-down"></i>
                                                 </button>
                                             </div>
-                                            <small class="compare-text">Compare with:</small>
+                                            <!-- <small class="compare-text">Compare with:</small>
                                             <small class="change-provider" onclick="compareWithGrok(this, 'grok')">Grok</small>
-                                            <small class="change-provider" onclick="compareWithGrok(this, 'simple')">Simple</small>
+                                            <small class="change-provider" onclick="compareWithGrok(this, 'simple')">Simple</small> -->
 
                                         </div>
                                         <!-- Suggestions placeholder for loaded messages (fetch separately if needed) -->
@@ -597,6 +597,8 @@ if (isset($conversation_messages['error'])) {
     const chatProxyUrl = 'auth/chat.php';
     const feedbackProxyUrl = 'auth/feedback.php';
     let suggestionOverride = null;
+    let lastSentContent = '';
+    let lastInputText = '';
 
     // Auto-resize textarea on input (non-disruptive)
     document.addEventListener('DOMContentLoaded', () => {
@@ -660,12 +662,13 @@ if (isset($conversation_messages['error'])) {
                 chatInput.value = '';
                 chatInput.style.height = 'auto';
                 chatInput.style.height = chatInput.scrollHeight + 'px';
-
-                let sendContent = inputText; // Default to user input
+                lastInputText = inputText;
+                let sendContent = inputText;
                 if (suggestionOverride && suggestionOverride.fullPrompt) {
                     sendContent = suggestionOverride.fullPrompt; // Use full template
                     suggestionOverride = null; // Clear after use
                 }
+                lastSentContent = sendContent;
 
                 document.querySelectorAll('.suggestions-section').forEach(sec => sec.style.display = 'none');
 
@@ -701,6 +704,20 @@ if (isset($conversation_messages['error'])) {
                             </div>
                         `;
                     }
+                    const enabledProviders = <?php echo json_encode($_SESSION['enabledProviders'] ?? []); ?>;
+                    const currentProvider = result.provider || '';
+                    const otherProviders = enabledProviders.filter(p => p !== currentProvider);
+                    let compareOptionsHtml = '';
+                    if (otherProviders.length > 0) {
+                        compareOptionsHtml = `
+        <small class="compare-text">Compare with:</small>
+        ${otherProviders.map(provider => 
+            `<small class="change-provider" onclick="compareWithGrok(this, '${provider}')">${provider.charAt(0).toUpperCase() + provider.slice(1)}</small>`
+        ).join('')}
+    `;
+                    }
+
+
                     const aiMessageHtml = `
     <div class="chat-message ai">
         <img src="assets/images/favicon.png" alt="AI Avatar" class="avatar">
@@ -715,14 +732,13 @@ if (isset($conversation_messages['error'])) {
                         <i class="fas fa-thumbs-down"></i>
                     </button>
                 </div>
-               <small class="compare-text">Compare with:</small>
-                                            <small class="change-provider" onclick="compareWithGrok(this, 'grok')">Grok</small>
-                                            <small class="change-provider" onclick="compareWithGrok(this, 'simple')">Simple</small>
+                ${compareOptionsHtml}
             </div>
             ${suggestionsHtml}
         </div>
     </div>
 `;
+
                     chatContainer.innerHTML += aiMessageHtml;
                     chatContainer.scrollTop = chatContainer.scrollHeight;
 

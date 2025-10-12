@@ -45,6 +45,10 @@ if (isset($result['error'])) {
     echo json_encode(['error' => $result['error']]);
     exit;
 }
+$prefs = get_user_preferences();
+if (!isset($prefs['error'])) {
+    $_SESSION['enabledProviders'] = $prefs['userPrefs']['enabledProviders'] ?? [];
+}
 
 $_SESSION['prefs'] = $result['userPrefs'] ?? $data;
 echo json_encode(['message' => 'Preferences saved successfully']);
