@@ -2,7 +2,7 @@
 // mcp-tools.php
 ?>
 
-<button class="tool-btn"><i class="fas fa-tools attachment" onclick="toggleToolsDropdown()"></i></button>
+<button class="tool-btn"><i class="fas fa-tools my_mcp-tools" onclick="toggleToolsDropdown()"></i></button>
 <style>
     .tools-dropdown {
         position: absolute;
@@ -110,15 +110,9 @@
         transform: rotate(180deg);
     }
 
-    .attachment {
-        color: #000000;
-        /* Default color */
-        transition: color 0.2s ease;
-    }
+    .my_mcp-tools {}
 
-    .attachment.active {
-        color: #00B7E5;
-    }
+    .my_mcp-tools.active {}
 
     /* Mobile adjustments */
     @media (max-width: 768px) {
@@ -318,7 +312,7 @@
 
     function toggleToolsDropdown() {
         const dropdown = document.getElementById('toolsDropdown');
-        const icon = document.querySelector('.attachment');
+        const icon = document.querySelector('.my_mcp-tools');
         dropdown.classList.toggle('active');
         icon.classList.toggle('active');
     }
@@ -389,7 +383,7 @@
 
         // Close dropdowns
         document.getElementById('toolsDropdown').classList.remove('active');
-        document.querySelector('.attachment').classList.remove('active');
+        document.querySelector('.my_mcp-tools').classList.remove('active');
         document.querySelectorAll('.tools-item.has-sub').forEach(item => item.classList.remove('active'));
         document.querySelectorAll('.sub-tools-dropdown').forEach(sub => sub.classList.remove('active'));
     }
@@ -417,7 +411,7 @@
 
     // Close dropdown on outside click
     document.addEventListener('click', function(event) {
-        const icon = document.querySelector('.attachment');
+        const icon = document.querySelector('.my_mcp-tools');
         const dropdown = document.getElementById('toolsDropdown');
         if (!icon.contains(event.target) && !dropdown.contains(event.target)) {
             dropdown.classList.remove('active');
