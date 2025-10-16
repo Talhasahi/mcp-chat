@@ -130,7 +130,7 @@ if (isset($conversation_messages['error'])) {
     .chat-input-container {
         background-color: #FFFFFF;
         border-top: 1px solid #E4E4E7;
-        padding: 10px 20px 0 20px;
+        padding: 5px 20px 0 20px;
         /* Remove bottom padding */
         /* Not fixed - flows within col-9 */
         width: 100%;
@@ -503,6 +503,36 @@ if (isset($conversation_messages['error'])) {
         color: #009EC9;
         font-size: 11.50px;
     }
+
+    /* New styles for selected tool tag */
+    .selected-tool-tag {
+        display: none;
+        background-color: #E4E4E7;
+        color: #000000;
+        padding: 5px 10px;
+        border-radius: 20px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        position: relative;
+        width: fit-content;
+    }
+
+    .selected-tool-tag.active {
+        display: block;
+    }
+
+    .selected-tool-cross {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 10px;
+    }
+
+    .selected-tool-cross:hover {
+        color: #a71d2a;
+    }
 </style>
 
 <div class="main-content" style="padding: 0 0px 0px 0px;">
@@ -575,11 +605,13 @@ if (isset($conversation_messages['error'])) {
                     <?php endif; ?>
                 </div>
                 <!-- Chat Input within col-9 and chat-section (contained, not full screen) -->
+                <div id="selectedToolTag" class="selected-tool-tag mt-1"></div>
                 <div class="chat-input-container">
                     <div class="chat-input mb-2">
                         <div class="tool-wrapper">
                             <?php include 'mcp-tools.php'; ?>
                         </div>
+
                         <textarea id="chatInput" class="chat-textarea" placeholder="Message to AI Chat..." rows="1"></textarea>
                         <!-- <i class="far fa-smile emoji"></i>
                         <i class="fas fa-microphone mic"></i> -->

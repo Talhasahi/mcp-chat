@@ -2,7 +2,8 @@
 // mcp-tools.php
 ?>
 
-<button class="tool-btn"><i class="fas fa-tools my_mcp-tools" onclick="toggleToolsDropdown()"></i></button>
+
+<button class="tool-btn"><i class="fas fa-tools" onclick="toggleToolsDropdown()"></i></button>
 <style>
     .tools-dropdown {
         position: absolute;
@@ -110,9 +111,15 @@
         transform: rotate(180deg);
     }
 
-    .my_mcp-tools {}
+    .attachment {
+        color: #000000;
+        /* Default color */
+        transition: color 0.2s ease;
+    }
 
-    .my_mcp-tools.active {}
+    .attachment.active {
+        color: #00B7E5;
+    }
 
     /* Mobile adjustments */
     @media (max-width: 768px) {
@@ -312,7 +319,7 @@
 
     function toggleToolsDropdown() {
         const dropdown = document.getElementById('toolsDropdown');
-        const icon = document.querySelector('.my_mcp-tools');
+        const icon = document.querySelector('.attachment');
         dropdown.classList.toggle('active');
         icon.classList.toggle('active');
     }
@@ -358,8 +365,8 @@
                         <div class="modal-body" id="toolModalBody">
                             ${inputsHtml}
                             <div class="mt-3 d-flex justify-content-between">
-                                <button type="button" class="btn btn-cancel w-50" onclick="submitTool('${tool.name}', 'with-chat')">With Chat</button>
-                                <button type="button" class="btn btn-apply w-50" onclick="submitTool('${tool.name}', 'without-chat')">Without Chat</button>
+                                <button type="button" class="btn btn-cancel w-50" onclick="submitTool('${tool.name}', 'with-chat', '${toolTitle}')">With Chat</button>
+                                <button type="button" class="btn btn-apply w-50" onclick="submitTool('${tool.name}', 'without-chat', '${toolTitle}')">Without Chat</button>
                             </div>
                         </div>
                     </div>
@@ -383,12 +390,12 @@
 
         // Close dropdowns
         document.getElementById('toolsDropdown').classList.remove('active');
-        document.querySelector('.my_mcp-tools').classList.remove('active');
+        document.querySelector('.attachment').classList.remove('active');
         document.querySelectorAll('.tools-item.has-sub').forEach(item => item.classList.remove('active'));
         document.querySelectorAll('.sub-tools-dropdown').forEach(sub => sub.classList.remove('active'));
     }
 
-    function submitTool(toolName, mode) {
+    function submitTool(toolName, mode, toolTitle) {
         const formData = {};
         const inputs = document.querySelectorAll('#toolModalBody [name]');
         inputs.forEach(el => {
@@ -407,11 +414,29 @@
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
         }
+
+        // Task one: If 'with-chat', show selected tool tag above textarea
+        if (mode === 'with-chat') {
+            const selectedTag = document.getElementById('selectedToolTag');
+            if (selectedTag) {
+                selectedTag.innerHTML = `Selected tool: ${toolTitle} <button class="selected-tool-cross" onclick="clearSelectedTool()">x</button>`;
+                selectedTag.classList.add('active');
+            }
+        }
+    }
+
+    // Helper to clear selected tool tag
+    function clearSelectedTool() {
+        const selectedTag = document.getElementById('selectedToolTag');
+        if (selectedTag) {
+            selectedTag.innerHTML = '';
+            selectedTag.classList.remove('active');
+        }
     }
 
     // Close dropdown on outside click
     document.addEventListener('click', function(event) {
-        const icon = document.querySelector('.my_mcp-tools');
+        const icon = document.querySelector('.attachment');
         const dropdown = document.getElementById('toolsDropdown');
         if (!icon.contains(event.target) && !dropdown.contains(event.target)) {
             dropdown.classList.remove('active');
