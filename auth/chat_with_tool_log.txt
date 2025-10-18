@@ -1,0 +1,26 @@
+Timestamp: 2025-10-18 09:38:07
+Empty Check:
+Errors: toolInput['args'] is empty
+Input Received: {
+    "conversationId": "cmgt69qx1000fu5f4amjrr3vb",
+    "content": "Give me summery",
+    "tool": {
+        "category": "Brevo",
+        "name": "brevo.account",
+        "args": []
+    }
+}
+----------------------------------------
+Timestamp: 2025-10-18 09:40:48
+Empty Check:
+Errors: toolInput['args'] is empty
+Input Received: {
+    "conversationId": "cmgt69qx1000fu5f4amjrr3vb",
+    "content": "Ok .",
+    "tool": {
+        "category": "Brevo",
+        "name": "brevo.account",
+        "args": []
+    }
+}
+----------------------------------------

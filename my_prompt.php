@@ -626,11 +626,13 @@ if (isset($conversation_messages['error'])) {
     const conversationId = '<?php echo $conversationId ?? ''; ?>'; // From PHP
     const token = localStorage.getItem('token') || '<?php echo $_SESSION['token'] ?? ''; ?>';
     const chatProxyUrl = 'auth/chat.php';
+    const chatWithToolProxyUrl = 'auth/chat_with_tool.php'; // New proxy
     const feedbackProxyUrl = 'auth/feedback.php';
     const forceProxyUrl = 'auth/force_provider_chat.php';
     let suggestionOverride = null;
     let lastSentContent = '';
     let lastInputText = '';
+    let selectedTool = null; // To store {category, name, args, title}
     const sendBtn = document.querySelector('.send-btn');
 
     // Helper: Append user message to chat container
@@ -735,16 +737,28 @@ if (isset($conversation_messages['error'])) {
         }
     }
 
-    // Helper: Send chat request (normal or force provider)
+    // Helper: Send chat request (normal or with tool or force provider)
     async function sendChatRequest(content, forceProvider = null) {
-        const url = forceProvider ? forceProxyUrl : chatProxyUrl;
-        const body = forceProvider ? {
-            provider: forceProvider,
-            content
-        } : {
+        let url = chatProxyUrl;
+        let body = {
             conversationId,
             content
         };
+
+        if (selectedTool) {
+            url = chatWithToolProxyUrl;
+            body.tool = {
+                category: selectedTool.category,
+                name: selectedTool.name,
+                args: selectedTool.args
+            };
+        } else if (forceProvider) {
+            url = forceProxyUrl;
+            body = {
+                provider: forceProvider,
+                content
+            };
+        }
 
         const response = await fetch(url, {
             method: 'POST',
@@ -755,6 +769,7 @@ if (isset($conversation_messages['error'])) {
         });
 
         const result = await response.json();
+        console.log(result);
         if (!response.ok) {
             throw new Error(result.error || 'Failed to send message');
         }
@@ -824,6 +839,8 @@ if (isset($conversation_messages['error'])) {
                         provider
                     } = result;
                     appendAIMessage(aiContent || 'AI response received.', assistantMessageId, nextSuggestions, provider);
+                    // Clear selected tool after successful send
+                    clearSelectedTool();
                 } catch (error) {
                     console.error('Error sending message:', error);
                     const errorHtml = `

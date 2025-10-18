@@ -449,3 +449,36 @@ function force_provider_message($provider, $message)
     $decoded = json_decode($response, true);
     return $decoded ?? ['success' => true]; // Returns full response incl. content
 }
+
+
+// Add this function to config.php (uses call_authenticated_api for POST /chat with tool)
+function send_message_with_tool($data)
+{
+    start_session();
+    $token = $_SESSION['token'] ?? '';
+    if (!$token) {
+        return ['error' => 'No authentication token – please log in again.'];
+    }
+
+    $endpoint = '/chat';
+    $result = call_authenticated_api($endpoint, $data, 'POST');
+    $response = $result['response'];
+    $http_code = $result['code'];
+
+    $logFile = __DIR__ . '/chat_with_tool_log.txt';
+    $logData = "Timestamp: " . date('Y-m-d H:i:s') . "\n";
+    $logData .= "URL: $endpoint\n";
+    $logData .= "Request Data: " . json_encode($data, JSON_PRETTY_PRINT) . "\n";
+    $logData .= "Response: " . ($response ?: 'No response') . "\n";
+    $logData .= "HTTP Code: $http_code\n";
+    $logData .= "----------------------------------------\n";
+    file_put_contents($logFile, $logData, FILE_APPEND);
+
+    if (!$response || ($http_code !== 200 && $http_code !== 201)) {
+        $decoded = json_decode($response, true);
+        return ['error' => $decoded['error'] ?? 'Failed to send message with tool'];
+    }
+
+    $decoded = json_decode($response, true);
+    return $decoded ?? ['success' => true]; // Returns full response incl. content
+}

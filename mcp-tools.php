@@ -2,8 +2,7 @@
 // mcp-tools.php
 ?>
 
-
-<button class="tool-btn"><i class="fas fa-tools" onclick="toggleToolsDropdown()"></i></button>
+<button class="tool-btn"><i class="fas fa-tools attachment" onclick="toggleToolsDropdown()"></i></button>
 <style>
     .tools-dropdown {
         position: absolute;
@@ -205,6 +204,43 @@
         return tools.find(tool => tool.title === title);
     }
 
+    // Helper to cast form values to correct types based on schema
+    function castToSchemaType(value, schema) {
+        if (!schema || !schema.type) return value;
+
+        if (schema.type === 'boolean') {
+            return value === 'true' || value === true;
+        } else if (schema.type === 'number' || schema.type === 'integer') {
+            return schema.type === 'integer' ? parseInt(value, 10) : parseFloat(value);
+        } else if (schema.type === 'string') {
+            return String(value);
+        } else if (schema.type === 'array' && schema.items) {
+            if (typeof value === 'string' && schema.items.type === 'string') {
+                return value.split(',').map(item => item.trim()).filter(item => item);
+            } else if (typeof value === 'string' && (schema.items.type === 'number' || schema.items.type === 'integer')) {
+                return value.split(',').map(item => schema.items.type === 'integer' ? parseInt(item.trim(), 10) : parseFloat(item.trim())).filter(item => !isNaN(item));
+            } else if (typeof value === 'string') {
+                try {
+                    return JSON.parse(value);
+                } catch (e) {
+                    return value;
+                }
+            }
+            return Array.isArray(value) ? value : [];
+        } else if (schema.type === 'object' && schema.properties) {
+            const result = {};
+            Object.keys(value).forEach(key => {
+                if (schema.properties[key]) {
+                    result[key] = castToSchemaType(value[key], schema.properties[key]);
+                } else {
+                    result[key] = value[key];
+                }
+            });
+            return result;
+        }
+        return value;
+    }
+
     // Recursive function to generate inputs for nested schemas
     function generateInputs(schema, basePath = '', rowCounter = 0) {
         let html = '';
@@ -365,8 +401,8 @@
                         <div class="modal-body" id="toolModalBody">
                             ${inputsHtml}
                             <div class="mt-3 d-flex justify-content-between">
-                                <button type="button" class="btn btn-cancel w-50" onclick="submitTool('${tool.name}', 'with-chat', '${toolTitle}')">With Chat</button>
-                                <button type="button" class="btn btn-apply w-50" onclick="submitTool('${tool.name}', 'without-chat', '${toolTitle}')">Without Chat</button>
+                                <button type="button" class="btn btn-cancel w-50" onclick="submitTool('${category}', '${tool.name}', '${toolTitle}', 'with-chat')">With Chat</button>
+                                <button type="button" class="btn btn-apply w-50" onclick="submitTool('${category}', '${tool.name}', '${toolTitle}', 'without-chat')">Without Chat</button>
                             </div>
                         </div>
                     </div>
@@ -395,7 +431,13 @@
         document.querySelectorAll('.sub-tools-dropdown').forEach(sub => sub.classList.remove('active'));
     }
 
-    function submitTool(toolName, mode, toolTitle) {
+    function submitTool(category, toolName, toolTitle, mode) {
+        const tool = getToolByCategoryAndTitle(category, toolTitle);
+        if (!tool || !tool.inputSchema?.properties) {
+            alert('Tool schema not found');
+            return;
+        }
+
         const formData = {};
         const inputs = document.querySelectorAll('#toolModalBody [name]');
         inputs.forEach(el => {
@@ -405,8 +447,15 @@
                 formData[el.name] = el.value;
             }
         });
-        console.log('Submitting tool:', toolName, 'Data:', formData, 'Mode:', mode);
-        // TODO: Integrate with your API call here
+
+        // Cast formData to correct types based on schema
+        const typedFormData = {};
+        Object.keys(formData).forEach(key => {
+            const schemaProp = tool.inputSchema.properties[key];
+            typedFormData[key] = castToSchemaType(formData[key], schemaProp);
+        });
+
+        console.log('Submitting tool:', toolName, 'Data:', typedFormData, 'Mode:', mode);
 
         // Close modal
         const modalEl = document.getElementById('toolModal');
@@ -415,8 +464,14 @@
             if (modal) modal.hide();
         }
 
-        // Task one: If 'with-chat', show selected tool tag above textarea
+        // If 'with-chat', save selected tool details and show tag
         if (mode === 'with-chat') {
+            selectedTool = {
+                category: category,
+                name: toolName,
+                args: typedFormData,
+                title: toolTitle
+            };
             const selectedTag = document.getElementById('selectedToolTag');
             if (selectedTag) {
                 selectedTag.innerHTML = `Selected tool: ${toolTitle} <button class="selected-tool-cross" onclick="clearSelectedTool()">x</button>`;
@@ -425,8 +480,9 @@
         }
     }
 
-    // Helper to clear selected tool tag
+    // Helper to clear selected tool tag and data
     function clearSelectedTool() {
+        selectedTool = null;
         const selectedTag = document.getElementById('selectedToolTag');
         if (selectedTag) {
             selectedTag.innerHTML = '';
