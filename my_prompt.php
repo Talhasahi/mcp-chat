@@ -7,6 +7,10 @@ $conversationId = $_GET['id'] ?? null;
 $conversation_messages = get_conversation_messages($conversationId);
 if (isset($conversation_messages['error'])) {
     $conversation_messages = []; // Treat error as empty
+} else if (isset($conversation_messages['messages']) && is_array($conversation_messages['messages'])) {
+    $conversation_messages = $conversation_messages['messages']; // Extract messages array
+} else {
+    $conversation_messages = []; // Fallback to empty if structure invalid
 }
 ?>
 
